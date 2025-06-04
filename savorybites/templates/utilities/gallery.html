@@ -1,0 +1,24 @@
+{% load static %}
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-4 text-gray-800">Our Gallery</h2>
+                <p class="max-w-2xl mx-auto text-gray-600">A visual journey through our culinary creations</p>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+                {% for image in gallery %}
+
+                <div class="gallery-item overflow-hidden rounded-lg shadow-md cursor-pointer">
+                    <img src="{{image.image.url}}" alt="image{{image.id}}" class="w-full h-full object-cover transition-transform duration-300 hover:scale-110">
+                </div>
+
+                {% endfor %}
+
+            </div>
+        </div>
+    </section>
+    <!-- End of Gallery Section -->

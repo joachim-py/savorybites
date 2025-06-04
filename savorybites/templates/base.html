@@ -1,0 +1,253 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>
+            {% block title %} {% endblock title %}
+        </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom CSS */
+        .hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 90vh;
+        }
+        
+        .menu-item:hover .menu-overlay {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .menu-overlay {
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .testimonial-card {
+            transition: all 0.3s ease;
+        }
+        
+        .testimonial-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .reservation-form input, .reservation-form select {
+            border-bottom: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        
+        .reservation-form input:focus, .reservation-form select:focus {
+            border-bottom-color: #d1a054;
+            outline: none;
+        }
+        
+        .scroll-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .scroll-top.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .avatar-placeholder {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #f59e42;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-right: 1rem;
+            flex-shrink: 0;
+            letter-spacing: 1px;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            border: 2px solid #fff;
+            transition: background 0.3s;
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-800">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg fixed w-full z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <a href="#" class="text-2xl font-bold text-amber-800">Savory Bites</a>
+                </div>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex space-x-8">
+                    <a href="#home" class="text-gray-800 hover:text-amber-600 transition">Home</a>
+                    <a href="#about" class="text-gray-800 hover:text-amber-600 transition">About</a>
+                    <a href="#menu" class="text-gray-800 hover:text-amber-600 transition">Menu</a>
+                    <a href="#gallery" class="text-gray-800 hover:text-amber-600 transition">Gallery</a>
+                    <a href="#testimonials" class="text-gray-800 hover:text-amber-600 transition">Testimonials</a>
+                    <a href="#contact" class="text-gray-800 hover:text-amber-600 transition">Contact</a>
+                </div>
+                
+                <div class="hidden md:block">
+                    <a href="#reservation" class="bg-amber-600 text-white px-6 py-2 rounded-full hover:bg-amber-700 transition">Reservation</a>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="menu-btn" class="text-gray-800 focus:outline-none">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white w-full px-4 pb-4">
+            <div class="flex flex-col space-y-3">
+                <a href="#home" class="text-gray-800 hover:text-amber-600 transition py-2 border-b">Home</a>
+                <a href="#about" class="text-gray-800 hover:text-amber-600 transition py-2 border-b">About</a>
+                <a href="#menu" class="text-gray-800 hover:text-amber-600 transition py-2 border-b">Menu</a>
+                <a href="#gallery" class="text-gray-800 hover:text-amber-600 transition py-2 border-b">Gallery</a>
+                <a href="#testimonials" class="text-gray-800 hover:text-amber-600 transition py-2 border-b">Testimonials</a>
+                <a href="#contact" class="text-gray-800 hover:text-amber-600 transition py-2 border-b">Contact</a>
+                <a href="#reservation" class="bg-amber-600 text-white px-6 py-2 rounded-full hover:bg-amber-700 transition text-center">Reservation</a>
+            </div>
+        </div>
+    </nav>
+    <!-- Endo of Navigation -->
+    
+    {% block hero %} 
+    {% include "utilities/hero.html" %}
+    {% endblock hero %}
+
+    {% block about %}
+    {% include "utilities/about.html" %}
+    {% endblock about %}
+
+    {% block menu %}
+    {% include "utilities/menu.html" %}
+    {% endblock menu %}
+
+    {% block gallery %}
+    {% include "utilities/gallery.html" %}
+    {% endblock gallery %}
+
+    {% block testimonials %}
+    {% include "utilities/testimonials.html" %}
+    {% endblock testimonials %}
+
+    {% block reservation %}
+    {% include "utilities/reservation.html" %}
+    {% endblock reservation %}
+
+    {% block contact %}
+    {% include "utilities/contact.html" %}
+    {% endblock contact %}
+
+    {% block footer %}
+    {% include "utilities/footer.html" %}
+    {% endblock footer %}
+
+    
+    <script>
+        // Mobile Menu Toggle
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Menu Category Filter
+        const categoryBtns = document.querySelectorAll('.menu-category-btn');
+        const menuItems = document.querySelectorAll('.menu-item');
+        
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons
+                categoryBtns.forEach(b => b.classList.remove('active', 'bg-amber-600', 'text-white'));
+                categoryBtns.forEach(b => b.classList.add('bg-gray-200', 'text-gray-800'));
+                
+                // Add active class to clicked button
+                btn.classList.add('active', 'bg-amber-600', 'text-white');
+                btn.classList.remove('bg-gray-200', 'text-gray-800');
+                
+                const category = btn.getAttribute('data-category');
+                
+                // Filter menu items
+                menuItems.forEach(item => {
+                    if (category === 'all' || item.getAttribute('data-category') === category) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Scroll to Top Button
+        const scrollTopBtn = document.getElementById('scroll-top');
+        
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('active');
+            } else {
+                scrollTopBtn.classList.remove('active');
+            }
+        });
+        
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Close mobile menu if open
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                }
+            });
+        });
+        
+        // Set minimum date for reservation to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').setAttribute('min', today);
+    </script>
+    {% block customJS %} {% endblock customJS %}
+</body>
+</html>

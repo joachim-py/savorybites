@@ -1,0 +1,45 @@
+    {% load static %}
+    
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="py-20 bg-amber-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold mb-4 text-gray-800">What Our Guests Say</h2>
+                <p class="max-w-2xl mx-auto text-gray-600">Hear from our valued customers about their dining experiences</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                {% for review in reviews %}
+
+                <div class="testimonial-card bg-white p-8 rounded-lg shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="text-amber-500 mr-2">
+                           {% with total=review.rating %}
+                            {% for i in ""|ljust:total %}
+                                <i class="fas fa-star"></i>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-6">"{{review.comment}}"</p>
+                    <div class="flex items-center">
+                        {% if review.image %}
+                        <img src="{{review.image.url}}" alt="{{review.customer_name}}" class="w-12 h-12 rounded-full mr-4">
+                        {% else %}
+                        <div class="avatar-placeholder">
+                            {{ review.get_initials }}
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h4 class="font-bold">{{review.customer_name}}</h4>
+                            <p class="text-gray-500 text-sm">{{review.customer_occupation}}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    <!-- End of Testimonials Section -->

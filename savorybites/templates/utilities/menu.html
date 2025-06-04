@@ -1,0 +1,166 @@
+{% load static %}
+
+    <!-- Special Offers -->
+    <section class="py-16 bg-amber-800 text-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-4">Today's Specials</h2>
+                <p class="max-w-2xl mx-auto">Experience our chef's exclusive creations available for a limited time</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {% for item in specials %}
+
+                <div class="bg-white text-gray-800 rounded-lg overflow-hidden shadow-lg">
+                    <img src="{{item.image.url}}" alt="{{item.name}}" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-bold">{{item.name}}</h3>
+                            <span class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">${{item.price}}</span>
+                        </div>
+                        <p class="text-gray-600 mb-4">{{item.description}}</p>
+                        <button class="text-amber-600 font-medium hover:text-amber-700" data-id="{{item.id}}">Add to Order</button>
+                    </div>
+                </div>
+
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    
+    <!-- Menu Section -->
+    <section id="menu" class="py-20">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold mb-4 text-gray-800">Our Menu</h2>
+                <p class="max-w-2xl mx-auto text-gray-600">Carefully crafted dishes made with the finest ingredients</p>
+            </div>
+            
+            <div class="flex flex-wrap justify-center mb-12">
+                <button class="menu-category-btn active px-6 py-2 mx-2 bg-amber-600 text-white rounded-full" data-category="all">All</button>
+                <button class="menu-category-btn px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="starters">Starters</button>
+                <button class="menu-category-btn px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="mains">Main Courses</button>
+                <button class="menu-category-btn px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="desserts">Desserts</button>
+                <button class="menu-category-btn px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="drinks">Drinks</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 menu-items-container">
+                <!-- Starters -->
+                {% for item in menu_items %}
+                {% if item.category == 'ST' %}
+                <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="starters">
+                    <div class="flex">
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-32 h-32 object-cover">
+                        <div class="p-4 flex-1">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-lg font-bold">{{item.name}}</h3>
+                                <span class="text-amber-600 font-bold">${{item.price}}</span>
+                            </div>
+                            <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
+                        </div>
+                    </div>
+                    <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" data-id="{{item.id}}">Add to Order</button>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                
+                <!-- Mains -->
+                {% for item in menu_items %}
+                {% if item.category == 'MC' %}
+                <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="mains">
+                    <div class="flex">
+                        <img src="{{ item.image.url }}" alt="{{item.name}}" class="w-32 h-32 object-cover">
+                        <div class="p-4 flex-1">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-lg font-bold">{{item.name}}</h3>
+                                <span class="text-amber-600 font-bold">${{item.price}}</span>
+                            </div>
+                            <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
+                        </div>
+                    </div>
+                    <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" data-id="{{item.id}}">Add to Order</button>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                
+                <!-- Desserts -->
+                {% for item in menu_items %}
+                {% if item.category == 'DE' or item.category == 'SN' %}
+                <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="desserts">
+                    <div class="flex">
+                        <img src="{{item.image.url}}" alt="{{item.name}}" class="w-32 h-32 object-cover">
+                        <div class="p-4 flex-1">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-lg font-bold">{{item.name}}</h3>
+                                <span class="text-amber-600 font-bold">${{item.price}}</span>
+                            </div>
+                            <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
+                        </div>
+                    </div>
+                    <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" data-id="{{item.id}}">Add to Order</button>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                
+                <!-- Drinks -->
+                {% for item in menu_items %}
+                {% if item.category == 'DR' %}
+                <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="drinks">
+                    <div class="flex">
+                        <img src="{{item.image.url}}" alt="{{item.name}}" class="w-32 h-32 object-cover">
+                        <div class="p-4 flex-1">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-lg font-bold">{{item.name}}</h3>
+                                <span class="text-amber-600 font-bold">${{item.price}}</span>
+                            </div>
+                            <p class="text-gray-600 text-sm mt-1">H{{item.description}}</p>
+                        </div>
+                    </div>
+                    <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" data-id="{{item.id}}">Add to Order</button>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                
+            </div>
+            
+            <div class="text-center mt-12">
+                <a href="#" class="inline-block border-2 border-amber-600 text-amber-600 px-8 py-3 rounded-full hover:bg-amber-600 hover:text-white transition">View Full Menu</a>
+            </div>
+        </div>
+    </section>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryButtons = document.querySelectorAll('.menu-category-btn');
+            const menuItems = document.querySelectorAll('.menu-item');
+
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+
+                    // Remove active class from all buttons
+                    categoryButtons.forEach(btn => btn.classList.remove('active'));
+                    // Add active class to the clicked button
+                    this.classList.add('active');
+
+                    // Show/Hide menu items based on category
+                    menuItems.forEach(item => {
+                        if (category === 'all' || item.getAttribute('data-category') === category) {
+                            item.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
