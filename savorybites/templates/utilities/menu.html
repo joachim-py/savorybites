@@ -12,14 +12,14 @@
                 {% for item in specials %}
 
                 <div class="bg-white text-gray-800 rounded-lg overflow-hidden shadow-lg">
-                    <img src="{{item.image.url}}" alt="{{item.name}}" class="w-full h-48 object-cover">
+                    <img src="{{item.menu_item.image.url}}" alt="{{item.menu_item.name}}" class="w-full h-48 object-cover">
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-xl font-bold">{{item.name}}</h3>
-                            <span class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">${{item.price}}</span>
+                            <h3 class="text-xl font-bold">{{item.menu_item.name}}</h3>
+                            <span class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">${{item.menu_item.price}}</span>
                         </div>
-                        <p class="text-gray-600 mb-4">{{item.description}}</p>
-                        <button class="text-amber-600 font-medium hover:text-amber-700" data-id="{{item.id}}">Add to Order</button>
+                        <p class="text-gray-600 mb-4">{{item.menu_item.description}}</p>
+                        <button class="text-amber-600 font-medium hover:text-amber-700 add-to-cart-btn" onclick="addToCart({{item.menu_item.id}})">Add to Order</button>
                     </div>
                 </div>
 
@@ -36,12 +36,12 @@
                 <p class="max-w-2xl mx-auto text-gray-600">Carefully crafted dishes made with the finest ingredients</p>
             </div>
             
-            <div class="flex flex-wrap justify-center mb-12">
-                <button class="menu-category-btn active px-6 py-2 mx-2 bg-amber-600 text-white rounded-full" data-category="all">All</button>
-                <button class="menu-category-btn px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="starters">Starters</button>
-                <button class="menu-category-btn px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="mains">Main Courses</button>
-                <button class="menu-category-btn px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="desserts">Desserts</button>
-                <button class="menu-category-btn px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="drinks">Drinks</button>
+            <div class="flex md:flex-wrap md:justify-center mb-12 overflow-x-auto -mx-2 px-2 md:overflow-x-visible">
+                <button class="menu-category-btn whitespace-nowrap active px-6 py-2 mx-2 bg-amber-600 text-white rounded-full" data-category="all">All</button>
+                <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="starters">Starters</button>
+                <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="mains">Main Courses</button>
+                <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="desserts">Desserts</button>
+                <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="drinks">Drinks</button>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 menu-items-container">
@@ -60,7 +60,7 @@
                         </div>
                     </div>
                     <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" data-id="{{item.id}}">Add to Order</button>
+                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" onclick="addToCart({{item.id}})">Add to Order</button>
                     </div>
                 </div>
                 {% endif %}
@@ -81,7 +81,7 @@
                         </div>
                     </div>
                     <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" data-id="{{item.id}}">Add to Order</button>
+                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" onclick="addToCart({{item.id}})">Add to Order</button>
                     </div>
                 </div>
                 {% endif %}
@@ -102,7 +102,7 @@
                         </div>
                     </div>
                     <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" data-id="{{item.id}}">Add to Order</button>
+                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" onclick="addToCart({{item.id}})">Add to Order</button>
                     </div>
                 </div>
                 {% endif %}
@@ -123,24 +123,71 @@
                         </div>
                     </div>
                     <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" data-id="{{item.id}}">Add to Order</button>
+                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" onclick="addToCart({{item.id}})">Add to Order</button>
                     </div>
                 </div>
                 {% endif %}
                 {% endfor %}
                 
             </div>
+            <!-- View Full Menu Button -->
+            <div x-data="{ open: false }">
+                <div class="text-center mt-12" id="view-full-menu">
+                    <a href="#" @click="open = true" class="inline-block border-2 border-amber-600 text-amber-600 px-8 py-3 rounded-full hover:bg-amber-600 hover:text-white transition">View Full Menu</a>
+                </div>
+
+                <!-- Menu Modal -->
+                <div x-show="open" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:leave="transition ease-in duration-200"
+                    style="display: none;">
+                    <!-- Modal Content -->
+                    <div class="bg-white w-full max-w-6xl rounded-lg shadow-lg relative" style="height: 90vh; width: 90%;">
+                        <!-- Header (static) -->
+                        <div class="sticky top-0 bg-white border-b border-gray-200 z-10">
+                            <div class="flex justify-between items-center p-6">
+                                <h2 class="text-xl font-semibold">Savory Bites Menu</h2>
+                                <button @click="open = false" class="text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Body (scrollable) -->
+                        <div class="overflow-y-auto h-[calc(100%-100px)] p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {% for item in menu %}
+                                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                                    <div class="flex">
+                                        <img src="{{item.image.url}}" alt="{{item.name}}" class="w-32 h-32 object-cover">
+                                        <div class="p-4 flex-1">
+                                            <div class="flex justify-between items-start">
+                                                <h3 class="text-lg font-bold">{{item.name}}</h3>
+                                                <span class="text-amber-600 font-bold">${{item.price}}</span>
+                                            </div>
+                                            <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
+                                            <div class="mt-4">
+                                                <button onclick="addToCart({{item.id}})" class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 w-full transition-all duration-300" data-id="{{item.id}}" data-name="{{item.name}}">
+                                                    Add to Cart
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             
-            <div class="text-center mt-12">
-                <a href="#" class="inline-block border-2 border-amber-600 text-amber-600 px-8 py-3 rounded-full hover:bg-amber-600 hover:text-white transition">View Full Menu</a>
-            </div>
         </div>
     </section>
-    
+    <script src="https://unpkg.com/alpinejs" defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const categoryButtons = document.querySelectorAll('.menu-category-btn');
             const menuItems = document.querySelectorAll('.menu-item');
+            const viewFullMenu = document.getElementById('view-full-menu');
 
             categoryButtons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -159,8 +206,71 @@
                             item.style.display = 'none';
                         }
                     });
+
+                    if (category === 'all') {
+                        viewFullMenu.style.display = 'block';
+                    } else {
+                        viewFullMenu.style.display = 'none';
+                    }
                 });
             });
         });
+
+        function addToCart(itemId) {
+            const button = event.currentTarget;
+            const originalText = button.textContent;
+            
+            // Show loading state
+            button.textContent = 'Adding...';
+            button.disabled = true;
+            button.classList.add('bg-amber-400');
+
+            // Send AJAX request
+            $.ajax({
+                url: '{% url "add-to-cart" %}',
+                method: 'POST',
+                data: {
+                    "menu_item_id": itemId,
+                    "quantity": 1,
+                    "csrfmiddlewaretoken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // Update cart count
+                        updateCartCount(response.cart_count);
+                        
+                        // Update button state
+                        button.textContent = 'Added!';
+                        button.classList.remove('bg-amber-400');
+                        button.classList.add('bg-green-600');
+                        
+                        // Show notification
+                        notyf.success(response.message);
+                        
+                        // Reset button after 2 seconds
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                            button.classList.remove('bg-green-600');
+                            button.classList.add('bg-amber-600');
+                            button.disabled = false;
+                        }, 2000);
+                    } else {
+                        // Show error
+                        notyf.error(response.message);
+                        button.textContent = originalText;
+                        button.classList.remove('bg-amber-400');
+                        button.classList.add('bg-amber-600');
+                        button.disabled = false;
+                    }
+                },
+                error: function(xhr, status, error) {
+                    notyf.error('An error occurred while adding to cart');
+                    button.textContent = originalText;
+                    button.classList.remove('bg-amber-400');
+                    button.classList.add('bg-amber-600');
+                    button.disabled = false;
+                }
+            })
+        }
     </script>
 

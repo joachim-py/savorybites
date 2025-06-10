@@ -125,6 +125,36 @@
         const form = bookTableButton.closest('form');
         const formData = new FormData(form);
 
+        if (formData.get('name') === '') {
+            notyf.error('Please enter your name');
+            return;
+        }
+
+        if (formData.get('email') === '') {
+            notyf.error('Please enter your email');
+            return;
+        }
+
+        if (formData.get('phone') === '') {
+            notyf.error('Please enter your phone number');
+            return;
+        }
+
+        if (formData.get('guests') === '') {
+            notyf.error('Please enter the number of guests');
+            return;
+        }
+
+        if (formData.get('date') === '') {
+            notyf.error('Please enter the reservation date');
+            return;
+        }
+
+        if (formData.get('time') === '') {
+            notyf.error('Please enter the reservation time');
+            return;
+        }
+
         fetch('/reservation/', {
             method: 'POST',
             body: formData,
@@ -135,15 +165,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                alert(data.message);
+                notyf.success(data.message);
                 form.reset();
             } else {
-                alert('Error: ' + data.error);
+                notyf.error('Error: ' + data.error);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred. Please try again later.');
+            notyf.error('An error occurred. Please try again later.');
         });
     });
 </script>

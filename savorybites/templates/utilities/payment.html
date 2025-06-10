@@ -1,0 +1,94 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="max-w-7xl md:max-w-3xl mx-auto px-4 py-8">
+    
+    <div class="bg-white rounded-lg shadow-md p-6 mt-12">
+        <h1 class="text-3xl font-bold mb-6">Payment</h1>
+        <form action="" method="post" id="paymentForm">
+            {% csrf_token %}
+            <div class="space-y-6">
+                <!-- Order Summary -->
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <span id="order-id">Order: #{{ order.id }}</span>
+                            <span class="text-gray-600">{{ order.order_date }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Amount</span>
+                            <span id="total-amount">${{ order.total_price }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- <div>
+                    <label class="block text-sm font-medium text-gray-700">Amount</label>
+                    <input type="number" value="{{ order.total_price }}" readonly class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                </div> -->
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Order Details</label>
+                    <div class="mt-2 p-4 bg-gray-50 rounded-md">
+                        <p><strong>Order:</strong> #{{ order.id }}</p>
+                        <p><strong>Customer:</strong> {{ order.customer_name }}</p>
+                        <p><strong>Email:</strong> {{ order.customer_email }}</p>
+                        <p><strong>Total Items:</strong> {{ order.cart_items.count }}</p>
+                        <input type="hidden" name="order_id" value="{{ order.id }}">
+                        <input type="hidden" name="customer_email" value="{{ order.customer_email }}">
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-amber-600 text-white py-3 px-6 rounded-lg hover:bg-amber-700 transition" id="payment-button">
+                    Proceed to Payment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block customJS %}
+<script>
+    const paymentButton = document.getElementById('payment-button');
+    const paymentForm = document.querySelector('form');
+    
+    paymentButton.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        paymentButton.disabled = true;
+        paymentButton.textContent = "Processing...";
+
+        const orderId = document.getElementsByName('order_id')[0].value;
+        const customerEmail = document.getElementsByName('customer_email')[0].value;
+
+        $.ajax({
+            url: paymentForm.action,
+            type: "POST",
+            data: {
+                "order_id": orderId,
+                "customer_email": customerEmail,
+                "csrfmiddlewaretoken": "{{ csrf_token }}"
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    notyf.success("Redirecting to Paystack for payment...");
+                    window.location.href = response.authorization_url;
+                } else {
+                    notyf.error(response.message || "Payment initialization failed.");
+                }
+            },
+            error: function(error) {
+                notyf.error("An error occurred: " + error.responseText);
+            },
+            complete: function() {
+                paymentButton.disabled = false;
+                paymentButton.textContent = "Proceed to Payment";
+            }
+        });
+
+    })
+</script>
+{% endblock customJS %}

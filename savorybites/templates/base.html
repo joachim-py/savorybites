@@ -8,6 +8,7 @@
             {% block title %} {% endblock title %}
         </title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Custom CSS */
@@ -105,7 +106,16 @@
                     <a href="#testimonials" class="text-gray-800 hover:text-amber-600 transition">Testimonials</a>
                     <a href="#contact" class="text-gray-800 hover:text-amber-600 transition">Contact</a>
                 </div>
-                
+
+                <a href="{% url 'cart' %}" class="relative">
+                    <span class="cursor-pointer bg-amber-600 text-white px-6 py-2 rounded hover:bg-amber-700 transition">
+                        <i class="fas fa-shopping-cart"></i>
+                    </span>
+                    <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                        {{ cart_count }}
+                    </span>
+                </a>
+
                 <div class="hidden md:block">
                     <a href="#reservation" class="bg-amber-600 text-white px-6 py-2 rounded-full hover:bg-amber-700 transition">Reservation</a>
                 </div>
@@ -166,8 +176,12 @@
     {% include "utilities/footer.html" %}
     {% endblock footer %}
 
-    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script>
+        // Creating Notify Instance
+        const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'bottom' } });
+
         // Mobile Menu Toggle
         const menuBtn = document.getElementById('menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
@@ -175,6 +189,14 @@
         menuBtn.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');
         });
+
+        // Function to update cart count
+        function updateCartCount(count) {
+            const cartCount = document.getElementById('cartCount');
+            if (cartCount) {
+                cartCount.textContent = count;
+            }
+        }
         
         // Menu Category Filter
         const categoryBtns = document.querySelectorAll('.menu-category-btn');

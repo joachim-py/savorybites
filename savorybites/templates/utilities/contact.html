@@ -101,6 +101,26 @@
         const form = contactButton.closest('form');
         const formData = new FormData(form);
 
+        if (formData.get('contact_name') === '') {
+            notyf.error('Please enter your name');
+            return;
+        }
+
+        if (formData.get('contact_email') === '') {
+            notyf.error('Please enter your email');
+            return;
+        }
+
+        if (formData.get('contact_subject') === '') {
+            notyf.error('Please enter your subject');
+            return;
+        }
+
+        if (formData.get('contact_message') === '') {
+            notyf.error('Please enter your message');
+            return;
+        }
+
         fetch('/contact/', {
             method: 'POST',
             body: formData,
@@ -111,15 +131,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                alert(data.message);
+                notyf.success(data.message);
                 form.reset();
             } else {
-                alert('Error: ' + data.error);
+                notyf.error('Error: ' + data.error);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred. Please try again later.');
+            notyf.error('An error occurred. Please try again later.');
         });
     });
 </script>

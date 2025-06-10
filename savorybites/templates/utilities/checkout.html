@@ -1,0 +1,393 @@
+{% extends 'layout.html' %}
+{% block title %} Checkout {% endblock title %}
+
+{% block content %}
+<div class="max-w-7xl md:max-w-5xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6 mt-10">
+        <h1 class="text-3xl font-bold mb-6">Checkout</h1>
+        
+        <form method="POST" action="{% url 'checkout' %}" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <!-- Shipping Information -->
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">Shipping Information</h2>
+                    <div class="space-y-4 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                            <input type="text" name="full_name" value="{{ user.get_full_name }}" required class="mt-1 px-3 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" name="email" value="{{ user.email }}" required class="mt-1 px-3 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                            <input type="tel" name="phone" required class="mt-1 px-3 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Address</label>
+                            <textarea name="address" rows="3" required class="mt-1 px-3 pt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"></textarea>
+                        </div>
+                    </div>
+
+                    <div>
+                        <!-- Delivery Options -->
+                        <h2 class="text-xl font-semibold mb-4">Delivery Options</h2>
+                        <div class="space-y-4 mb-3">
+                            <div class="flex items-center space-x-3">
+                                <input type="radio" name="delivery_option" value="dine_in" id="dine_in" checked class="text-amber-600 focus:ring-amber-500">
+                                <label for="dine_in" class="text-sm">Dine In</label>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <input type="radio" name="delivery_option" value="takeaway" id="takeaway" class="text-amber-600 focus:ring-amber-500">
+                                <label for="takeaway" class="text-sm">Takeaway</label>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <input type="radio" name="delivery_option" value="delivery" id="delivery" class="text-amber-600 focus:ring-amber-500">
+                                <label for="delivery" class="text-sm">Delivery</label>
+                            </div>
+                        </div>
+                
+                        <!-- Special Instructions -->
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Special Instructions</label>
+                        <textarea name="notes" rows="3" placeholder="Any special instructions for your order..." class="block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 px-3 pt-2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div>
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-xl font-semibold">Order Summary</h2>
+                        <button type="button" onclick="clearCart();" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center gap-2">
+                            Clear Cart
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        {% for item in cart_items %}
+                        <div class="flex justify-between border-b pb-4 last:border-0 mb-4 cart-items">
+                            <div class="flex justify-between">
+                                <div class="mr-4">
+                                    <img src="{{ item.menu_item.image.url }}" alt="{{ item.menu_item.name }}" class="w-20 h-20 object-cover rounded-lg">
+                                    
+                                    <div class="flex items-center space-x-2 mt-2">
+
+                                        <button type="button" class="text-gray-400 hover:text-gray-600" onclick="updateCartItemQuantity({{ item.id }}, -1)">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                            </svg>
+                                        </button>
+                                        <span class="px-2 py-1 bg-gray-100 rounded text-gray-700" id="quantity-{{ item.id }}">{{ item.quantity }}</span>
+                                        <button type="button" class="text-gray-400 hover:text-gray-600" onclick="updateCartItemQuantity({{ item.id }}, 1)">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-medium">{{ item.menu_item.name }}</h3>
+                                    <div class="flex flex-col space-y-2">
+                                        <small class="fst-italic">${{ item.menu_item.price }} x <span id="qtyCount-{{ item.id }}"> {{ item.quantity }} </span> items</small>
+                                        <span class="font-medium" id="subtotal-{{ item.id }}">${{ item.subtotal }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="">
+                                <button data-cart-item-id="{{ item.id }}" class="text-red-500 hover:text-red-700 flex items-center gap-2 remove-cart-item">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>     
+                        </div>
+                        {% endfor %}
+                        <div class="border-t pt-4"></div>
+                        <div class="flex justify-between font-semibold">
+                            <span>Total</span>
+                            <span class="total-amount">${{ total }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="mt-8">
+                        <button type="submit" class="w-full bg-amber-600 text-white py-3 px-6 rounded-lg hover:bg-amber-700 transition">
+                            Place Order
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+ 
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+
+
+{% block customJS %}
+<script>
+
+    const form = document.querySelector('form');
+
+    // Function to update cart item quantity
+    function updateCartItemQuantity(cartItemId, change) {
+        // Get current quantity
+        const quantityElement = document.getElementById(`quantity-${cartItemId}`);
+        const quantityCountElement = document.getElementById(`qtyCount-${cartItemId}`);
+        if (!quantityElement || !quantityCountElement) return;
+
+        const currentQuantity = parseInt(quantityElement.textContent);
+        const newQuantity = currentQuantity + change;
+
+        // Don't allow quantity to go below 1
+        if (newQuantity < 1) {
+            notyf.error('Quantity cannot be less than 1');
+            return;
+        }
+
+        // Update the quantity display immediately
+        quantityElement.textContent = newQuantity;
+        quantityCountElement.textContent = newQuantity;
+
+        // Make the API request
+        $.ajax({
+            url: `/cart/update/${cartItemId}/`,
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({
+                quantity: parseInt(newQuantity)
+            }),
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Update the subtotal
+                    const price = parseFloat(response.price);
+                    const subtotalElement = document.getElementById(`subtotal-${cartItemId}`);
+                    if (subtotalElement) {
+                        subtotalElement.textContent = `$${(price * newQuantity).toFixed(2)}`;
+                    }
+
+                    // Update the total amount
+                    const totalElement = document.querySelector('.total-amount');
+                    if (totalElement) {
+                        totalElement.textContent = `$${parseFloat(response.total).toFixed(2)}`;
+                    }
+
+                    notyf.success('Quantity updated successfully');
+                }
+            },
+            error: function(error) {
+                console.error('Error:', error);
+                // If there was an error, revert the quantity display
+                quantityElement.textContent = currentQuantity;
+                notyf.error('An error occurred while updating quantity');
+            }
+        })
+    }
+
+    // Function to handle cart item removal
+    function removeCartItem(cartItemId) {
+
+        // Show confirmation dialog
+        if (!confirm('Are you sure you want to remove this item from your cart?')) {
+            return;
+        }
+
+        // Get the button element
+        const button = event.target;
+        
+        // Disable the button and show loading spinner
+        button.disabled = true;
+        button.innerHTML = `
+            <svg class="animate-spin h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        `;
+
+        // Make the API request
+        $.ajax({
+            url: `/cart/remove/${cartItemId}/`,
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Show success message
+                    notyf.success('Item removed from cart');
+                    
+                    // Update UI without full page reload
+                    const itemRow = button.closest('.flex.justify-between.items-center.border-b.pb-4');
+                    if (itemRow) {
+                        itemRow.remove();
+                    }
+                    // Update total amount
+                    const totalElement = document.querySelector('.total-amount');
+                    if (totalElement) {
+                        totalElement.textContent = `$${parseFloat(response.total).toFixed(2)}`;
+                    }
+                    
+                    // Update cart count
+                    const cartCountElement = document.getElementById('cartCount');
+                    if (cartCountElement) {
+                        cartCountElement.textContent = response.cart_count;
+                    }
+                    if (response.cart_count === 0) {
+                        form.innerHTML = `
+                            <div class="text-center py-12">
+                                <h2 class="text-3xl font-bold mb-6">Your cart is empty</h2>
+                                <p class="text-gray-600 mb-8">Your cart has been cleared successfully.</p>
+                                <a href="{% url 'menu' %}" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-md">
+                                    Continue Shopping
+                                </a>
+                            </div>
+                        `;
+                    }
+                }
+            },
+            error: function(error) {
+                console.error('Error removing item from cart:', error);
+                notyf.error('An error occurred while removing the item from the cart');
+            },
+            complete: function() {
+                // Re-enable the button and restore original icon
+                button.disabled = false;
+                button.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                `;
+            }
+        });
+    }
+    
+    // Add event listener to all remove buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event listener for remove cart item buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-cart-item')) {
+                const cartItemId = e.target.closest('.remove-cart-item').dataset.cartItemId;
+                removeCartItem(cartItemId);
+            }
+        });
+
+        // Add event listener for clear cart button
+        const clearCartButton = document.getElementById('clear-cart');
+        if (clearCartButton) {
+            clearCartButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Are you sure you want to clear your entire cart?')) {
+                    $.ajax({
+                        url: '/cart/clear/',
+                        type: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        },
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                notyf.success('Cart cleared successfully');
+                                
+                                // Update UI without full page reload
+                                const cartItems = document.querySelectorAll('.cart-item');
+                                cartItems.forEach(item => item.remove());
+                                
+                                // Update total amount
+                                const totalElement = document.querySelector('.total-amount');
+                                if (totalElement) {
+                                    totalElement.textContent = `$${parseFloat(response.total).toFixed(2)}`;
+                                }
+                                
+                                // Update cart count
+                                const cartCountElement = document.getElementById('cartCount');
+                                if (cartCountElement) {
+                                    cartCountElement.textContent = response.cart_count;
+                                }
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error clearing cart:', error);
+                            notyf.error('An error occurred while clearing the cart');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Add event listener for remove buttons
+        const removeButtons = document.querySelectorAll('.text-red-500');
+        removeButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const cartItemId = parseInt(this.getAttribute('data-cart-item-id'));
+                removeCartItem(cartItemId);
+            });
+        });
+    });
+
+    // Add event listener to clear cart button
+    document.addEventListener('DOMContentLoaded', function() {
+        const clearCartButton = document.getElementById('clear-cart');
+        if (clearCartButton) {
+            clearCartButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                clearCart();
+                
+            });
+        }
+        
+    });
+
+    function clearCart() {
+        // Show confirmation dialog
+        if (!confirm('Are you sure you want to clear your cart?')) {
+            return;
+        }
+
+        // Make the API request
+        $.ajax({
+            url: '/cart/clear/',
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Show success message
+                    notyf.success('Cart cleared successfully');
+                    
+                    // Replace the form with a cart empty message
+                    if (form) {
+                        form.innerHTML = `
+                            <div class="text-center py-12">
+                                <h2 class="text-3xl font-bold mb-6">Your cart is empty</h2>
+                                <p class="text-gray-600 mb-8">Your cart has been cleared successfully.</p>
+                                <a href="{% url 'menu' %}" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-md">
+                                    Continue Shopping
+                                </a>
+                            </div>
+                        `;
+                    }
+                    
+                }
+            },
+            error: function(error) {
+                console.error('Error clearing cart:', error);
+                notyf.error('An error occurred while clearing the cart');
+            }
+        });
+    }
+
+</script>
+{% endblock customJS %}
