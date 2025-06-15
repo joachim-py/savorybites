@@ -5,36 +5,33 @@
 <div class="max-w-7xl md:max-w-5xl mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow-md p-6 mt-10">
         <h1 class="text-3xl font-bold mb-6">Checkout</h1>
-        
-        <form method="POST" action="{% url 'checkout' %}" class="space-y-6">
+        {% if cart_items %}
+        <form method="POST" action="{% url 'checkout' %}" class="space-y-6" id="checkoutForm">
             {% csrf_token %}
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <!-- Shipping Information -->
-                <div>
+                <div class="order-2 md:order-1">
+                {% if request.user.is_authenticated %}
                     <h2 class="text-xl font-semibold mb-4">Shipping Information</h2>
                     <div class="space-y-4 mb-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Full Name</label>
-                            <input type="text" name="full_name" value="{{ user.get_full_name }}" required class="mt-1 px-3 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                            <input required type="text" name="full_name" value="{{ user.get_full_name }}" class="mt-1 px-3 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" name="email" value="{{ user.email }}" required class="mt-1 px-3 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                            <input required type="email" name="email" value="{{ user.email }}" class="mt-1 px-3 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                            <input type="tel" name="phone" required class="mt-1 px-3 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Address</label>
-                            <textarea name="address" rows="3" required class="mt-1 px-3 pt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"></textarea>
+                            <input required type="tel" name="phone" value="{{user.profile.phone_number}}" class="mt-1 px-3 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
                         </div>
                     </div>
 
                     <div>
                         <!-- Delivery Options -->
-                        <h2 class="text-xl font-semibold mb-4">Delivery Options</h2>
+                        <h2 class="text-xl font-semibold mb-4 mt-6">Delivery Options</h2>
                         <div class="space-y-4 mb-3">
                             <div class="flex items-center space-x-3">
                                 <input type="radio" name="delivery_option" value="dine_in" id="dine_in" checked class="text-amber-600 focus:ring-amber-500">
@@ -48,16 +45,24 @@
                                 <input type="radio" name="delivery_option" value="delivery" id="delivery" class="text-amber-600 focus:ring-amber-500">
                                 <label for="delivery" class="text-sm">Delivery</label>
                             </div>
+                            <div class="hidden delivery_address">
+                                <label class="block text-sm font-medium text-gray-700">Delivery Address</label>
+                                <textarea name="address" rows="3" class="mt-1 px-3 pt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">{{user.profile.address}}</textarea>
+                                <small class="text-red-600 block hidden addressError">Delivery Address is required.</small>
+                            </div>
                         </div>
                 
                         <!-- Special Instructions -->
                         <label class="block text-sm font-medium text-gray-700 mb-2">Special Instructions</label>
                         <textarea name="notes" rows="3" placeholder="Any special instructions for your order..." class="block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 px-3 pt-2"></textarea>
+                    
                     </div>
-                </div>
 
+                {% endif %}
+
+                </div>
                 <!-- Order Summary -->
-                <div>
+                <div class="order-1 md:order-2">
                     <div class="flex justify-between items-center mb-8">
                         <h2 class="text-xl font-semibold">Order Summary</h2>
                         <button type="button" onclick="clearCart();" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center gap-2">
@@ -70,9 +75,9 @@
                             <div class="flex justify-between">
                                 <div class="mr-4">
                                     <img src="{{ item.menu_item.image.url }}" alt="{{ item.menu_item.name }}" class="w-20 h-20 object-cover rounded-lg">
-                                    
-                                    <div class="flex items-center space-x-2 mt-2">
 
+                                    <!-- Update buttons -->
+                                    <div class="flex items-center space-x-2 mt-2">
                                         <button type="button" class="text-gray-400 hover:text-gray-600" onclick="updateCartItemQuantity({{ item.id }}, -1)">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
@@ -96,6 +101,7 @@
                                 </div>
                             </div>
 
+                            <!-- Delete Ictem button -->
                             <div class="">
                                 <button data-cart-item-id="{{ item.id }}" class="text-red-500 hover:text-red-700 flex items-center gap-2 remove-cart-item">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,25 +111,69 @@
                             </div>     
                         </div>
                         {% endfor %}
-                        <div class="border-t pt-4"></div>
                         <div class="flex justify-between font-semibold">
                             <span>Total</span>
                             <span class="total-amount">${{ total }}</span>
                         </div>
+                        <div class="border-t pt-4"></div>
                     </div>
-
-                    <!-- Submit Button -->
+                </div>
+                <!-- Submit Button -->
+                <div class="order-3"> 
                     <div class="mt-8">
-                        <button type="submit" class="w-full bg-amber-600 text-white py-3 px-6 rounded-lg hover:bg-amber-700 transition">
+                        <button type="button" id="checkoutButton" class="w-full bg-amber-600 text-white py-3 px-6 rounded-lg hover:bg-amber-700 transition">
                             Place Order
                         </button>
+
                     </div>
 
                 </div>
 
             </div>
- 
         </form>
+        {% else %}
+        <div class="text-center py-12">
+            <h2 class="text-2xl font-bold mb-4">Your cart is empty</h2>
+            <p class="text-gray-600 mb-6">Add some items to your cart to get started.</p>
+            <a href="{% url 'menu' %}" class="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition">
+                Continue Shopping
+            </a>
+        </div>
+    {% endif %}
+    </div>
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg w-full mx-3 md:w-96">
+            <h2 class="text-2xl font-bold mb-6 text-center">Login to Continue</h2>
+            <form method="post" action="{% url 'login' %}" id="loginForm">
+                {% csrf_token %}
+                <input type="hidden" name="login_source" value="modal">
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <div class="space-y-4">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                        <input type="text" name="username" id="username" required
+                            class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" name="password" id="password" required
+                            class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="remember" id="remember">
+                        <label for="remember" class="ml-2 text-sm text-gray-600">Remember me</label>
+                    </div>
+                    <div class="flex justify-between">
+                        <button type="submit" class="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">
+                            Login
+                        </button>
+                        <a href="{% url 'signup' %}" class="text-amber-600 hover:text-amber-700">Create Account</a>
+                    </div>
+                </div>
+                <div id="loginError" class="text-red-600 mt-2"></div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -133,7 +183,8 @@
 {% block customJS %}
 <script>
 
-    const form = document.querySelector('form');
+    const form = document.getElementById('checkoutForm');
+    const cartCountElement = document.getElementById('cartCount'); 
 
     // Function to update cart item quantity
     function updateCartItemQuantity(cartItemId, change) {
@@ -195,7 +246,6 @@
 
     // Function to handle cart item removal
     function removeCartItem(cartItemId) {
-
         // Show confirmation dialog
         if (!confirm('Are you sure you want to remove this item from your cart?')) {
             return;
@@ -227,7 +277,8 @@
                     notyf.success('Item removed from cart');
                     
                     // Update UI without full page reload
-                    const itemRow = button.closest('.flex.justify-between.items-center.border-b.pb-4');
+                    const itemRow = button.closest('.cart-items');
+                    // Remove the item row from the cart
                     if (itemRow) {
                         itemRow.remove();
                     }
@@ -238,16 +289,15 @@
                     }
                     
                     // Update cart count
-                    const cartCountElement = document.getElementById('cartCount');
                     if (cartCountElement) {
                         cartCountElement.textContent = response.cart_count;
                     }
                     if (response.cart_count === 0) {
                         form.innerHTML = `
                             <div class="text-center py-12">
-                                <h2 class="text-3xl font-bold mb-6">Your cart is empty</h2>
-                                <p class="text-gray-600 mb-8">Your cart has been cleared successfully.</p>
-                                <a href="{% url 'menu' %}" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-md">
+                                <h2 class="text-2xl font-bold mb-4">Your cart is empty</h2>
+                                <p class="text-gray-600 mb-6">Add some items to your cart to get started.</p>
+                                <a href="{% url 'menu' %}" class="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition">
                                     Continue Shopping
                                 </a>
                             </div>
@@ -281,49 +331,6 @@
             }
         });
 
-        // Add event listener for clear cart button
-        const clearCartButton = document.getElementById('clear-cart');
-        if (clearCartButton) {
-            clearCartButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (confirm('Are you sure you want to clear your entire cart?')) {
-                    $.ajax({
-                        url: '/cart/clear/',
-                        type: 'POST',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}',
-                            'Content-Type': 'application/json'
-                        },
-                        success: function(response) {
-                            if (response.status === 'success') {
-                                notyf.success('Cart cleared successfully');
-                                
-                                // Update UI without full page reload
-                                const cartItems = document.querySelectorAll('.cart-item');
-                                cartItems.forEach(item => item.remove());
-                                
-                                // Update total amount
-                                const totalElement = document.querySelector('.total-amount');
-                                if (totalElement) {
-                                    totalElement.textContent = `$${parseFloat(response.total).toFixed(2)}`;
-                                }
-                                
-                                // Update cart count
-                                const cartCountElement = document.getElementById('cartCount');
-                                if (cartCountElement) {
-                                    cartCountElement.textContent = response.cart_count;
-                                }
-                            }
-                        },
-                        error: function(error) {
-                            console.error('Error clearing cart:', error);
-                            notyf.error('An error occurred while clearing the cart');
-                        }
-                    });
-                }
-            });
-        }
-
         // Add event listener for remove buttons
         const removeButtons = document.querySelectorAll('.text-red-500');
         removeButtons.forEach(button => {
@@ -348,6 +355,7 @@
         
     });
 
+    // Clear Cart
     function clearCart() {
         // Show confirmation dialog
         if (!confirm('Are you sure you want to clear your cart?')) {
@@ -367,13 +375,17 @@
                     // Show success message
                     notyf.success('Cart cleared successfully');
                     
+                    // Update cart count
+                    if (cartCountElement) {
+                        cartCountElement.textContent = response.cart_count;
+                    }
                     // Replace the form with a cart empty message
                     if (form) {
                         form.innerHTML = `
                             <div class="text-center py-12">
-                                <h2 class="text-3xl font-bold mb-6">Your cart is empty</h2>
-                                <p class="text-gray-600 mb-8">Your cart has been cleared successfully.</p>
-                                <a href="{% url 'menu' %}" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-md">
+                                <h2 class="text-2xl font-bold mb-4">Your cart is empty</h2>
+                                <p class="text-gray-600 mb-6">Add some items to your cart to get started.</p>
+                                <a href="{% url 'menu' %}" class="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition">
                                     Continue Shopping
                                 </a>
                             </div>
@@ -388,6 +400,70 @@
             }
         });
     }
+
+    // Function to handle checkout click
+    const loginModal = document.getElementById('loginModal');
+    const deliveryOptions = document.getElementsByName('delivery_option');
+
+    for (const option of deliveryOptions) {
+        option.addEventListener("change", function() {
+            if (option.value === 'delivery') {
+                document.querySelector('.delivery_address').classList.remove('hidden');
+            }
+        })
+    }
+
+    if ("{{ cart_count }}" > 0) {
+        document.getElementById('checkoutButton').addEventListener('click', function() {  
+            if ("{{request.user.is_authenticated}}" === "True") {
+                const selectedOption = document.querySelector('input[name="delivery_option"]:checked').value;
+                const deliveryAddress = document.querySelector('textarea[name="address"]');
+                const deliveryAddressError = document.querySelector('.addressError');
+                console.log(selectedOption);
+                if (selectedOption === "delivery" && !deliveryAddress.value.trim()) {
+                    deliveryAddressError.classList.remove('hidden');
+                    deliveryAddress.classList.add('border', 'border-red-600');
+                } else {
+                    deliveryAddressError.classList.add('hidden');
+                    deliveryAddress.classList.remove('border', 'border-red-600');
+                    document.getElementById('checkoutForm').submit();
+                }                
+            } else {
+                loginModal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }); 
+    }
+    
+    document.getElementById('loginModal').addEventListener('click', function(e) {
+        if (e.target.id === 'loginModal') {
+            loginModal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.onsubmit = async function(e) {
+                e.preventDefault();
+                const form = e.target;
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('loginModal').classList.add('hidden');
+                    window.location.href = data.redirect_url;
+                } else {
+                    document.getElementById('loginError').innerText = data.message;
+                }
+            };
+        } 
+    });
 
 </script>
 {% endblock customJS %}

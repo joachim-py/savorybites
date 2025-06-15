@@ -94,7 +94,7 @@
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center">
-                    <a href="#" class="text-2xl font-bold text-amber-800">Savory Bites</a>
+                    <a href="{% url 'index' %}" class="text-2xl font-bold text-amber-800">Savory Bites</a>
                 </div>
                 
                 <!-- Desktop Navigation -->
@@ -107,14 +107,47 @@
                     <a href="#contact" class="text-gray-800 hover:text-amber-600 transition">Contact</a>
                 </div>
 
-                <a href="{% url 'cart' %}" class="relative">
-                    <span class="cursor-pointer bg-amber-600 text-white px-6 py-2 rounded hover:bg-amber-700 transition">
-                        <i class="fas fa-shopping-cart"></i>
-                    </span>
-                    <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                        {{ cart_count }}
-                    </span>
-                </a>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'cart' %}" class="relative cursor-pointer mr-3">
+                        <span class="cursor-pointer bg-amber-600 text-white px-6 py-2 rounded hover:bg-amber-700 transition">
+                            <i class="fas fa-shopping-cart"></i>
+                        </span>
+                        <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                            {{ cart_count }}
+                        </span>
+                    </a>
+                    <!-- User Dropdown -->
+                    <div class="relative md:block hidden">
+                        <button id="userDropdownBtn" type="button" class="flex items-center focus:outline-none">
+                            <i class="fas fa-user-circle text-2xl text-amber-700"></i>
+                            <svg class="w-4 h-4 ml-1 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-40 bg-white rounded shadow-lg py-2 z-50 border border-gray-100">
+                            {% if request.user.is_authenticated %}
+                            <a href="{% url 'profile' %}" class="block px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700">
+                                <i class="fas fa-user mr-2"></i> Profile
+                            </a>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700">
+                                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                                </button>  
+                            </form>
+                            {% else %}
+                            <form method="post" action="{% url 'login' %}">
+                                {% csrf_token %}
+                               <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700">
+                                    <i class="fas fa-sign-in-alt mr-2"></i> Login
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- End User Dropdown -->
+                </div>
+
 
                 <div class="hidden md:block">
                     <a href="#reservation" class="bg-amber-600 text-white px-6 py-2 rounded-full hover:bg-amber-700 transition">Reservation</a>
@@ -138,7 +171,12 @@
                 <a href="#gallery" class="text-gray-800 hover:text-amber-600 transition py-2 border-b">Gallery</a>
                 <a href="#testimonials" class="text-gray-800 hover:text-amber-600 transition py-2 border-b">Testimonials</a>
                 <a href="#contact" class="text-gray-800 hover:text-amber-600 transition py-2 border-b">Contact</a>
-                <a href="#reservation" class="bg-amber-600 text-white px-6 py-2 rounded-full hover:bg-amber-700 transition text-center">Reservation</a>
+                {% if request.user.is_authenticated %}
+                <a href="{% url 'profile' %}" class="text-gray-800 hover:text-amber-600 transition py-2 border-b">Profile</a>
+                <a href="{% url 'logout' %}" class="text-gray-800 hover:text-amber-600 transition">Logout</a>
+                {% else %}
+                <a href="{% url 'login' %}" class="text-gray-800 hover:text-amber-600 transition">Login</a>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -269,6 +307,23 @@
         // Set minimum date for reservation to today
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('date').setAttribute('min', today);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('userDropdownBtn');
+            const menu = document.getElementById('userDropdownMenu');
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                menu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function() {
+                menu.classList.add('hidden');
+            });
+        });
+
+        // Example of updating cart count
+        updateCartCount({{ cart_count }});
+
+
     </script>
     {% block customJS %} {% endblock customJS %}
 </body>

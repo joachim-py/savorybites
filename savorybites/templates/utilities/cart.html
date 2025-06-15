@@ -4,7 +4,7 @@
 <div class="max-w-7xl md:max-w-5xl mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow-md p-6 mt-10">
     <h2 class="text-3xl font-bold mb-6">Shopping Cart</h2>
-    <div class="flex justify-end mb-3" id="cart-actions">
+    <div class="flex justify-end mb-3 {% if cart_count == 0 %}hidden {% endif %}" id="clear-cart">
         <button type="button" onclick="clearCart();" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center gap-2">
             Clear Cart
         </button>
@@ -83,7 +83,9 @@
                 </div>
             </div>
         </div>
-    </div>
+        <div id="container-empty">
+            <!-- Empty Cart Message -->
+        </div>
     {% else %}
     <div class="text-center py-12">
         <h2 class="text-2xl font-bold mb-4">Your cart is empty</h2>
@@ -98,9 +100,10 @@
 
 {% block customJS %}
 <script>
-    const cartActions = document.getElementById('cart-actions');
     const cartItemsElement = document.getElementById('cart-items');
+    const emptyContainer = document.getElementById('container-empty');
     const cartCountElement = document.getElementById('cartCount');
+    const clearCartButton = document.getElementById('clear-cart');
     
     // Function to update cart item quantity
     function updateCartItemQuantity(cartItemId, change) {
@@ -174,7 +177,6 @@
 
     // Function to handle cart item removal
     function removeCartItem(cartItemId) {
-
         // Show confirmation dialog
         if (!confirm('Are you sure you want to remove this item from your cart?')) {
             return;
@@ -233,14 +235,18 @@
                     // Update cart count
                     if (cartCountElement) {
                         cartCountElement.textContent = response.cart_count;
+                        
+                        if (response.cart_count === 0) {
+                            clearCartButton.style.display = 'none';
+                        }
                     }
                     if (response.cart_count === 0) {
-                        cartActions.style.display = 'none';
-                        cartItemsElement.innerHTML = `
-                            <div class="text-center py-12">
-                                <h2 class="text-3xl font-bold mb-6">Your cart is empty</h2>
-                                <p class="text-gray-600 mb-8">Your cart has been cleared successfully.</p>
-                                <a href="{% url 'menu' %}" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-md">
+                         cartItemsElement.classList.add('hidden');
+                        emptyContainer.innerHTML = `
+                             <div class="text-center py-12">
+                                <h2 class="text-2xl font-bold mb-4">Your cart is empty</h2>
+                                <p class="text-gray-600 mb-6">Add some items to your cart to get started.</p>
+                                <a href="{% url 'menu' %}" class="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition">
                                     Continue Shopping
                                 </a>
                             </div>
@@ -274,49 +280,6 @@
             }
         });
 
-        // Add event listener for clear cart button
-        const clearCartButton = document.getElementById('clear-cart');
-        if (clearCartButton) {
-            clearCartButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (confirm('Are you sure you want to clear your entire cart?')) {
-                    $.ajax({
-                        url: '/cart/clear/',
-                        type: 'POST',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}',
-                            'Content-Type': 'application/json'
-                        },
-                        success: function(response) {
-                            if (response.status === 'success') {
-                                notyf.success('Cart cleared successfully');
-                                
-                                // Update UI without full page reload
-                                const cartItems = document.querySelectorAll('.cart-items');
-                                console.log(cartItems);
-                                cartItems.forEach(item => item.remove());
-                                
-                                // Update total amount
-                                const totalElement = document.querySelector('.total');
-                                if (totalElement) {
-                                    totalElement.textContent = `$${parseFloat(response.total).toFixed(2)}`;
-                                }
-                                
-                                // Update cart count
-                                if (cartCountElement) {
-                                    cartCountElement.textContent = response.cart_count;
-                                }
-                            }
-                        },
-                        error: function(error) {
-                            console.error('Error clearing cart:', error);
-                            notyf.error('An error occurred while clearing the cart');
-                        }
-                    });
-                }
-            });
-        }
-
         // Add event listener for remove buttons
         const removeButtons = document.querySelectorAll('.text-red-500');
         removeButtons.forEach(button => {
@@ -326,19 +289,6 @@
                 removeCartItem(cartItemId);
             });
         });
-    });
-
-    // Add event listener to clear cart button
-    document.addEventListener('DOMContentLoaded', function() {
-        const clearCartButton = document.getElementById('clear-cart');
-        if (clearCartButton) {
-            clearCartButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                clearCart();
-                
-            });
-        }
-        
     });
 
     function clearCart() {
@@ -362,13 +312,14 @@
                     
                     // Replace the cart items with a cart empty message
                     if (cartItemsElement) {
-                        cartActions.style.display = 'none';
                         cartCountElement.textContent = response.cart_count;
-                        cartItemsElement.innerHTML = `
+                        cartItemsElement.classList.add('hidden');
+                        clearCartButton.classList.add('hidden');
+                        emptyContainer.innerHTML = `
                             <div class="text-center py-12">
-                                <h2 class="text-3xl font-bold mb-6">Your cart is empty</h2>
-                                <p class="text-gray-600 mb-8">Your cart has been cleared successfully.</p>
-                                <a href="{% url 'menu' %}" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-md">
+                                <h2 class="text-2xl font-bold mb-4">Your cart is empty</h2>
+                                <p class="text-gray-600 mb-6">Add some items to your cart to get started.</p>
+                                <a href="{% url 'menu' %}" class="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition">
                                     Continue Shopping
                                 </a>
                             </div>

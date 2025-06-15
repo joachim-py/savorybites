@@ -1,7 +1,7 @@
 from django.contrib import admin
 from savorybites.models import (
     Menu, Contact, Gallery, Reservation, Review,
-    CartItem, Order, Payment, Profile, Special
+    CartItem, Order, Payment, Profile, Special, Delivery
 )
 
 # Menu Admin
@@ -34,9 +34,9 @@ class CartItemAdmin(admin.ModelAdmin):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'customer_name', 'customer_email', 'customer_phone', 
+        'order_id', 'customer_name', 'customer_email', 'customer_phone', 
         'delivery_option', 'total_price', 'status', 'payment_status', 
-        'order_date', 'delivery_date'
+        'order_date'
     )
     list_filter = (
         'status', 'payment_status', 'order_date', 'delivery_option'
@@ -54,7 +54,7 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': (
                 'customer_name', 'customer_email', 'customer_phone',
                 'customer_address', 'delivery_option', 'special_instructions',
-                'status', 'payment_status', 'order_date', 'delivery_date'
+                'status', 'payment_status', 'order_date'
             )
         }),
         ('Cart Items', {
@@ -74,7 +74,7 @@ class OrderAdmin(admin.ModelAdmin):
 # Payment Admin
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('order', 'payment_method', 'amount', 'status', 'reference', 'payment_date')
+    list_display = ('order__order_id', 'payment_method', 'amount', 'status', 'reference', 'payment_date')
     list_filter = ('payment_method', 'status', 'payment_date')
     search_fields = ('order__customer_name', 'reference')
     ordering = ('-payment_date',)
@@ -83,7 +83,7 @@ class PaymentAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Payment Details', {
-            'fields': ('order', 'payment_method', 'amount', 'status', 'reference')
+            'fields': ('order__order_id', 'payment_method', 'amount', 'status', 'reference')
         }),
         ('Financial', {
             'fields': ('payment_date',)
@@ -93,7 +93,7 @@ class PaymentAdmin(admin.ModelAdmin):
 # Profile Admin
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'phone_number', 'preferred_payment_method')
+    list_display = ('user', 'phone_number')
     search_fields = ('user__username', 'phone_number')
     list_per_page = 20
 
@@ -131,3 +131,13 @@ class ContactAdmin(admin.ModelAdmin):
     search_fields = ('customer_name', 'customer_email', 'subject', 'message')
     ordering = ('-contact_date',)
     list_per_page = 20
+
+@admin.register(Delivery)
+class DeliveryAdmin(admin.ModelAdmin):
+    list_display = ('order__order_id', 'order__customer_address', 'delivery_date', 'delivery_status', 'delivery_person')
+    list_filter = ('delivery_date', 'delivery_status')
+    search_fields = ('order__customer_name',)
+    ordering = ('-delivery_date',)
+    list_per_page = 20
+
+
