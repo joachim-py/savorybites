@@ -5,6 +5,7 @@ from decouple import config
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -73,11 +74,16 @@ def contact_us(request):
 
     return JsonResponse({'status': "success", 'message': 'Message was sent successfully!'})
 
+@require_POST
 def add_to_cart(request):
-    if request.method == 'POST':
+    try:
         menu_item_id = request.POST.get('menu_item_id')
+        if not menu_item_id:
+            return JsonResponse({'status': 'error', 'message': 'Menu item ID required'}, status=400)
+            
         menu_item = get_object_or_404(Menu, id=menu_item_id)
-
+        
+        # Get or create cart item
         if request.user.is_authenticated:
             cart_item, created = CartItem.objects.get_or_create(
                 user=request.user,
@@ -85,11 +91,7 @@ def add_to_cart(request):
                 defaults={'quantity': 1}
             )
         else:
-            session_key = request.session.session_key
-            if not session_key:
-                request.session.save()
-                session_key = request.session.session_key
-
+            session_key = request.session.session_key or request.session.create()
             cart_item, created = CartItem.objects.get_or_create(
                 session_key=session_key,
                 menu_item=menu_item,
@@ -100,145 +102,149 @@ def add_to_cart(request):
             cart_item.quantity += 1
             cart_item.save()
 
-        subtotal = float(cart_item.menu_item.price * cart_item.quantity)
-
-        if request.user.is_authenticated:
-            cart_count = CartItem.objects.filter(user=request.user).count()
-        else:
-            cart_count = CartItem.objects.filter(session_key=session_key).count()
-
-        return JsonResponse({
+        # Calculate response data
+        response_data = {
             'status': 'success',
-            'message': 'Item added to cart!',
+            'message': 'Item added to cart',
+            'item_id': cart_item.id,
             'quantity': cart_item.quantity,
-            'subtotal': subtotal,
-            'cart_count': cart_count
-        })
+            'price': float(menu_item.price),
+            'subtotal': float(menu_item.price * cart_item.quantity),
+            'cart_count': request.user.cart_items.count() if request.user.is_authenticated 
+                          else CartItem.objects.filter(session_key=session_key).count()
+        }
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
-
+@require_POST
 def remove_from_cart(request, cart_item_id):
-    if request.method == 'POST':
+    try:
         cart_item = get_object_or_404(CartItem, id=cart_item_id)
-
+        
+        # Verify ownership
         if request.user.is_authenticated:
             if cart_item.user != request.user:
-                return JsonResponse({'status': 'error', 'message': 'Cart item does not belong to this user'})
-            cart_item.delete()
-            remaining_items = CartItem.objects.filter(user=request.user)
+                return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+            items = CartItem.objects.filter(user=request.user)
+        else:
+            session_key = request.session.session_key
+            if not session_key or cart_item.session_key != session_key:
+                return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+            items = CartItem.objects.filter(session_key=session_key)
+        
+        # Delete item and calculate new totals
+        cart_item.delete()
+        remaining_items = items.exclude(id=cart_item_id)
+        
+        response_data = {
+            'status': 'success',
+            'message': 'Item removed from cart',
+            'item_id': cart_item_id,
+            'cart_count': remaining_items.count(),
+            'total': float(sum(item.menu_item.price * item.quantity for item in remaining_items))
+        }
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
+@require_POST
+def update_cart_quantity(request, cart_item_id):
+    try:
+        data = json.loads(request.body)
+        new_quantity = int(data.get('quantity', 1))
+        
+        if new_quantity < 1:
+            return JsonResponse({'status': 'error', 'message': 'Quantity must be at least 1'}, status=400)
+            
+        cart_item = get_object_or_404(CartItem, id=cart_item_id)
+        
+        # Verify ownership
+        if request.user.is_authenticated:
+            if cart_item.user != request.user:
+                return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+            items = CartItem.objects.filter(user=request.user)
+        else:
+            session_key = request.session.session_key
+            if not session_key or cart_item.session_key != session_key:
+                return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+            items = CartItem.objects.filter(session_key=session_key)
+        
+        # Update quantity
+        cart_item.quantity = new_quantity
+        cart_item.save()
+        
+        # Calculate response data
+        response_data = {
+            'status': 'success',
+            'message': 'Quantity updated',
+            'item_id': cart_item_id,
+            'quantity': new_quantity,
+            'price': float(cart_item.menu_item.price),
+            'subtotal': float(cart_item.menu_item.price * new_quantity),
+            'total': float(sum(item.menu_item.price * item.quantity for item in items)),
+            'cart_count': items.count()
+        }
+        
+        return JsonResponse(response_data)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@require_POST
+def clear_cart(request):
+    try:
+        if request.user.is_authenticated:
+            CartItem.objects.filter(user=request.user).delete()
+            cart_count = 0
         else:
             session_key = request.session.session_key
             if not session_key:
-                return JsonResponse({'status': 'error', 'message': 'Session not found'})
-            if cart_item.session_key != session_key:
-                return JsonResponse({'status': 'error', 'message': 'Cart item does not belong to this session'})
-            cart_item.delete()
-            remaining_items = CartItem.objects.filter(session_key=session_key)
-
-        total = sum(item.menu_item.price * item.quantity for item in remaining_items)
-
+                return JsonResponse({'status': 'error', 'message': 'Session not found'}, status=400)
+                
+            CartItem.objects.filter(session_key=session_key).delete()
+            cart_count = 0
+        
         return JsonResponse({
             'status': 'success',
-            'message': 'Item removed from cart',
-            'cart_count': remaining_items.count(),
-            'total': float(total)
+            'message': 'Cart cleared',
+            'cart_count': cart_count,
+            'total': 0
         })
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
-def update_cart_quantity(request, cart_item_id):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            new_quantity = data.get('quantity')
-
-            if not isinstance(new_quantity, (int, float)) or new_quantity < 1:
-                return JsonResponse({'status': 'error', 'message': 'Quantity must be a positive number'})
-
-            cart_item = get_object_or_404(CartItem, id=cart_item_id)
-
-            if request.user.is_authenticated:
-                if cart_item.user != request.user:
-                    return JsonResponse({'status': 'error', 'message': 'Cart item does not belong to this user'})
-            else:
-                session_key = request.session.session_key
-                if not session_key:
-                    return JsonResponse({'status': 'error', 'message': 'Session not found'})
-                if cart_item.session_key != session_key:
-                    return JsonResponse({'status': 'error', 'message': 'Cart item does not belong to this session'})
-
-            # Update quantity
-            cart_item.quantity = int(new_quantity)
-            cart_item.save()
-
-            # Recalculate total
-            if request.user.is_authenticated:
-                remaining_items = CartItem.objects.filter(user=request.user)
-            else:
-                remaining_items = CartItem.objects.filter(session_key=session_key)
-
-            total = sum(item.menu_item.price * item.quantity for item in remaining_items)
-
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Quantity updated',
-                'quantity': cart_item.quantity,
-                'subtotal': float(cart_item.menu_item.price * cart_item.quantity),
-                'total': float(total),
-                'price': float(cart_item.menu_item.price)
-            })
-
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
-def clear_cart(request):
-    if request.method == 'POST':
-        try:
-            if request.user.is_authenticated:
-                CartItem.objects.filter(user=request.user).delete()
-            else:
-                session_key = request.session.session_key
-                if not session_key:
-                    return JsonResponse({'status': 'error', 'message': 'Session not found'})
-
-                CartItem.objects.filter(session_key=session_key, user__isnull=True).delete()
-
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Cart cleared successfully',
-                'total': 0,
-                'cart_count': 0
-            })
-
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 def view_cart(request):
+    # Get cart items based on authentication status
     if request.user.is_authenticated:
-        cart_items = CartItem.objects.filter(user=request.user)
+        cart_items = CartItem.objects.filter(user=request.user).select_related('menu_item')
     else:
         session_key = request.session.session_key
         if not session_key:
-            return render(request, 'utilities/cart.html', {'cart_items': [], 'total': 0, 'cart_count': 0})
+            request.session.create()
+            session_key = request.session.session_key
+        cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True).select_related('menu_item')
 
-        cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
-
+    # Calculate totals
     cart_count = cart_items.count()
     total = sum(item.menu_item.price * item.quantity for item in cart_items)
 
-    return render(request, 'utilities/cart.html', {
+    context = {
         'cart_items': cart_items,
         'total': total,
         'cart_count': cart_count,
-    })
+    }
 
+    return render(request, 'utilities/cart.html', context)
+
+@login_required
 def checkout(request):
     if request.user.is_authenticated:
         cart_items = CartItem.objects.filter(user=request.user)

@@ -1,35 +1,46 @@
 {% extends 'layout.html' %}
-
+{% block title %} Place Order {% endblock title %}
+{% block cart %} {% endblock cart %}
 {% block content %}
 <div class="max-w-7xl md:max-w-3xl mx-auto px-4 py-8">
     
     <div class="bg-white rounded-lg shadow-md p-6 mt-12">
-        <h1 class="text-3xl font-bold mb-6">Payment</h1>
+        <h1 class="text-3xl font-bold mb-6">Place Order</h1>
         <form action="{% url 'payment' order.id %}" method="post" id="paymentForm">
             {% csrf_token %}
             <div class="space-y-6">
                 <!-- Order Summary -->
                 <div>
                     <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
-                    <div class="space-y-4">
-                        <div class="flex justify-between">
-                            <span id="order-id">Order: #{{ order.order_id }}</span>
-                            <span class="text-gray-600">{{ order.order_date }}</span>
+                    <div class="space-y-2">
+                        <div class="space-x-2">
+                            <span class="text-gray-600 font-bold">Order:</span>
+                            <span>#{{ order.order_id }}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Total Amount</span>
-                            <span id="total-amount">${{ order.total_price }}</span>
+                        <div class="space-x-2">
+                            <span class="text-gray-600 font-bold">Date:</span>
+                            <span>{{ order.order_date }}</span>
+                        </div>
+                        <div class="space-x-2">
+                            <span class="text-gray-600 font-bold">Total Items:</span>
+                            <span>{{ order.cart_items.count }}</span>
+                        </div>
+                        <div class="space-x-2">
+                            <span class="text-gray-600 font-bold">Total Amount:</span>
+                            <span id="total-amount">₦{{ order.total_price }}</span>
                         </div>
                     </div>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Order Details</label>
+                    <h2 class="text-xl font-semibold mb-4">Customer Details</h2>
                     <div class="mt-2 p-4 bg-gray-50 rounded-md">
-                        <p><strong>Order:</strong> #{{ order.order_id }}</p>
-                        <p><strong>Customer:</strong> {{ order.customer_name }}</p>
+                        <p><strong>Name:</strong> {{ order.customer_name }}</p>
                         <p><strong>Email:</strong> {{ order.customer_email }}</p>
-                        <p><strong>Total Items:</strong> {{ order.cart_items.count }}</p>
+                        <p><strong>Phone:</strong> {{ order.customer_phone }}</p>
+                        {% if order.delivery_option == 'delivery' %}
+                        <p><strong>Delivery Address:</strong> {{ order.customer_address }}</p>
+                        {% endif %}
                         <input type="hidden" name="customer_email" value="{{ order.customer_email }}">
                     </div>
                 </div>

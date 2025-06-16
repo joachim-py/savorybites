@@ -1,339 +1,402 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="max-w-7xl md:max-w-5xl mx-auto px-4 py-8">
-    <div class="bg-white rounded-lg shadow-md p-6 mt-10">
-    <h2 class="text-3xl font-bold mb-6">Shopping Cart</h2>
-    <div class="flex justify-end mb-3 {% if cart_count == 0 %}hidden {% endif %}" id="clear-cart">
-        <button type="button" onclick="clearCart();" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center gap-2">
-            Clear Cart
-        </button>
-    </div>
-    
-    {% if cart_items %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="cart-items">
-            <!-- Cart Items -->
-            <div>
-                <div class="space-y-4">
-                    {% for item in cart_items %}
-                    <div class="flex justify-between p-4 bg-gray-50 rounded-lg cart-items">
-                        <div class="flex justify-between">
-                            <div class="mr-4">
-                                <img src="{{ item.menu_item.image.url }}" alt="{{ item.menu_item.name }}" class="w-20 h-20 object-cover rounded-lg">
-                                
-                                <div class="flex items-center space-x-2 mt-2">
-                                    <button type="button" class="text-gray-400 hover:text-gray-600" onclick="updateCartItemQuantity({{ item.id }}, -1)">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-                                        </svg>
-                                    </button>
-                                    <span class="px-2 py-1 bg-gray-100 rounded text-gray-700" id="quantity-{{ item.id }}">{{ item.quantity }}</span>
-                                    <button type="button" class="text-gray-400 hover:text-gray-600" onclick="updateCartItemQuantity({{ item.id }}, 1)">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h1 class="text-3xl font-bold mb-6">Your Cart</h1>
+        
+        <div id="cart-container">
+            {% if cart_items %}
+            <div id="cart-content">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-lg font-semibold">
+                        Subtotal: <span id="cart-subtotal">₦{{ total }}</span>
+                    </div>
+                    <button id="clear-cart-btn" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-md text-sm flex items-center gap-1 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Clear All
+                    </button>
+                </div>
 
-                            <div>
+                <div id="cart-items" class="space-y-3">
+                    {% for item in cart_items %}
+                    <div class="cart-item bg-gray-50 p-4 rounded-lg" data-item-id="{{ item.id }}">
+                        <div class="flex gap-4 mb-3">
+                            <img src="{{ item.menu_item.image.url }}" alt="{{ item.menu_item.name }}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
+                            <div class="flex-grow">
                                 <h3 class="font-medium">{{ item.menu_item.name }}</h3>
-                                <div class="flex flex-col space-y-2">
-                                    <small class="fst-italic">${{ item.menu_item.price }} x <span id="qtyCount-{{ item.id }}"> {{ item.quantity }} </span> items</small>
-                                    <span class="font-medium" id="subtotal-{{ item.id }}">${{ item.subtotal }}</span>
+                                <div class="text-sm text-gray-600">
+                                    ₦{{ item.menu_item.price }} × <span class="item-quantity">{{ item.quantity }}</span>
                                 </div>
+                                <div class="font-medium item-subtotal">₦{{ item.subtotal }}</div>
                             </div>
                         </div>
-
-                        <div>
-                            <button data-cart-item-id="{{ item.id }}" class="text-red-500 hover:text-red-700 flex items-center gap-2 remove-cart-item">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex justify-between items-center">
+                            <button class="remove-item text-red-500 hover:text-red-700 text-sm flex items-center gap-1 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
+                                Remove
                             </button>
-                        </div> 
+                            <div class="flex items-center gap-1">
+                                <button class="quantity-btn decrease w-7 h-7 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                    </svg>
+                                </button>
+                                <span class="quantity-display px-2 w-10 text-center">{{ item.quantity }}</span>
+                                <button class="quantity-btn increase w-7 h-7 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white rounded transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
-            </div>
 
-            <!-- Cart Summary -->
-            <div class="bg-gray-50 p-6 rounded-lg">
-                <div class="space-y-4">
-                    <div class="flex justify-between">
-                        <span class="text-lg font-semibold">Subtotal</span>
-                        <span class="text-lg total">${{ total }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Shipping</span>
-                        <span class="text-gray-600">Free</span>
-                    </div>
-                    <div class="border-t pt-4"></div>
-                    <div class="flex justify-between">
-                        <span class="text-xl font-bold">Total</span>
-                        <span class="text-xl font-bold mb-4 total">${{ total }}</span>
-                    </div>
-                    
-                </div>
-                <div class="border-t pt-4"></div>
-                <div class="mt-2">
-                    <button type="submit" onclick="(window.location.href = '/checkout/');" class="w-full md:w-auto bg-amber-600 text-white py-3 px-6 rounded-lg hover:bg-amber-700 transition">
-                        Proceed to Checkout
+                <div class="mt-6 pt-4 border-t">
+                    <button id="checkoutButton" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-lg font-medium transition-colors">
+                        Checkout (₦<span id="checkout-total">{{ total }}</span>)
                     </button>
                 </div>
             </div>
+            {% else %}
+            <div id="empty-cart" class="text-center py-12">
+                <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold mb-2">Your cart is empty</h2>
+                <p class="text-gray-600 mb-6">Looks like you haven't added anything to your cart yet</p>
+                <a href="{% url 'menu' %}" class="inline-block bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-lg transition-colors">
+                    Browse Menu
+                </a>
+            </div>
+            {% endif %}
         </div>
-        <div id="container-empty">
-            <!-- Empty Cart Message -->
-        </div>
-    {% else %}
-    <div class="text-center py-12">
-        <h2 class="text-2xl font-bold mb-4">Your cart is empty</h2>
-        <p class="text-gray-600 mb-6">Add some items to your cart to get started.</p>
-        <a href="{% url 'menu' %}" class="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition">
-            Continue Shopping
-        </a>
     </div>
-    {% endif %}
 </div>
+
+ <!-- Login Modal -->
+<div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg w-full mx-3 md:w-96">
+        <h2 class="text-2xl font-bold mb-6 text-center">Login to Continue</h2>
+        <form method="post" action="{% url 'login' %}" id="login-form">
+            {% csrf_token %}
+            <input type="hidden" name="login_source" value="modal">
+            <input type="hidden" name="next" value="/checkout/">
+            <div class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" name="username" id="username" required
+                        class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" name="password" id="password" required
+                        class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" name="remember" id="remember">
+                    <label for="remember" class="ml-2 text-sm text-gray-600">Remember me</label>
+                </div>
+                <div class="flex justify-between">
+                    <button type="submit" class="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">
+                        Login
+                    </button>
+                    <a href="{% url 'signup' %}" class="text-amber-600 hover:text-amber-700">Create Account</a>
+                </div>
+            </div>
+            <div id="loginError" class="text-red-600 mt-2"></div>
+        </form>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block customJS %}
 <script>
-    const cartItemsElement = document.getElementById('cart-items');
-    const emptyContainer = document.getElementById('container-empty');
-    const cartCountElement = document.getElementById('cartCount');
-    const clearCartButton = document.getElementById('clear-cart');
-    
-    // Function to update cart item quantity
-    function updateCartItemQuantity(cartItemId, change) {
-        // Get current quantity
-        const quantityElement = document.getElementById(`quantity-${cartItemId}`);
-        const quantityCountElement = document.getElementById(`qtyCount-${cartItemId}`);
-        if (!quantityElement || !quantityCountElement) return;
-
-        const currentQuantity = parseInt(quantityElement.textContent);
-        const newQuantity = currentQuantity + change;
-
-        // Don't allow quantity to go below 1
-        if (newQuantity < 1) {
-            notyf.error('Quantity cannot be less than 1');
-            return;
-        }
-
-        // Update the quantity display immediately
-        quantityElement.textContent = newQuantity;
-        quantityCountElement.textContent = newQuantity;
-
-        // Make the API request
-        $.ajax({
-            url: `/cart/update/${cartItemId}/`,
-            type: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-            },
-            data: JSON.stringify({
-                quantity: parseInt(newQuantity)
-            }),
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Update the subtotal
-                    const price = parseFloat(response.price);
-                    const itemSubtotal = document.getElementById(`subtotal-${cartItemId}`);
-                    if (itemSubtotal) {
-                        itemSubtotal.textContent = `$${(price * newQuantity).toFixed(2)}`;
-                    }
-
-                    // Update all total amounts
-                    const allSubtotals = document.querySelectorAll('[id^="subtotal-"]');
-                    let totalAmount = 0;
-                    allSubtotals.forEach(subtotal => {
-                        const value = parseFloat(subtotal.textContent.replace('$', ''));
-                        if (!isNaN(value)) {
-                            totalAmount += value;
-                        }
-                    });
-                    
-                    // Update subtotal and total
-                    const subtotalDisplay = document.querySelector('.text-lg.total');
-                    const totalDisplay = document.querySelector('.text-xl.font-bold.total');
-                    if (subtotalDisplay && totalDisplay) {
-                        subtotalDisplay.textContent = `$${totalAmount.toFixed(2)}`;
-                        totalDisplay.textContent = `$${totalAmount.toFixed(2)}`;
-                    }
-
-                    notyf.success('Quantity updated successfully');
-                }
-            },
-            error: function(error) {
-                console.error('Error:', error);
-                // If there was an error, revert the quantity display
-                quantityElement.textContent = currentQuantity;
-                notyf.error('An error occurred while updating quantity');
-            }
-        })
-    }
-
-    // Function to handle cart item removal
-    function removeCartItem(cartItemId) {
-        // Show confirmation dialog
-        if (!confirm('Are you sure you want to remove this item from your cart?')) {
-            return;
-        }
-
-        // Get the button element
-        const button = event.target;
+class CartManager {
+    constructor() {
+        this.cartContainer = document.getElementById('cart-container');
+        this.cartCountElement = document.getElementById('cart-count');
         
-        // Disable the button and show loading spinner
-        button.disabled = true;
-        button.innerHTML = `
-            <svg class="animate-spin h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-        `;
-
-        // Make the API request
-        $.ajax({
-            url: `/cart/remove/${cartItemId}/`,
-            type: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-            },
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Show success message
-                    notyf.success('Item removed from cart');
-                    
-                    // Update UI without full page reload
-                    const itemRow = button.closest('.cart-items');
-                    console.log(itemRow);
-                    if (itemRow) {
-                        itemRow.remove(); // Remove the entire cart item container
-                    }
-                    
-                    // Update all total amounts
-                    const subtotalElements = document.querySelectorAll('[id^="subtotal-"]');
-                    let totalAmount = 0;
-                    subtotalElements.forEach(subtotal => {
-                        const value = parseFloat(subtotal.textContent.replace('$', ''));
-                        if (!isNaN(value)) {
-                            totalAmount += value;
-                        }
-                    });
-                    
-                    // Update subtotal and total
-                    const subtotalElement = document.querySelector('.text-lg.total');
-                    const totalElement = document.querySelector('.text-xl.font-bold.total');
-                    if (subtotalElement && totalElement) {
-                        subtotalElement.textContent = `$${totalAmount.toFixed(2)}`;
-                        totalElement.textContent = `$${totalAmount.toFixed(2)}`;
-                    }
-                    
-                    // Update cart count
-                    if (cartCountElement) {
-                        cartCountElement.textContent = response.cart_count;
-                        
-                        if (response.cart_count === 0) {
-                            clearCartButton.style.display = 'none';
-                        }
-                    }
-                    if (response.cart_count === 0) {
-                         cartItemsElement.classList.add('hidden');
-                        emptyContainer.innerHTML = `
-                             <div class="text-center py-12">
-                                <h2 class="text-2xl font-bold mb-4">Your cart is empty</h2>
-                                <p class="text-gray-600 mb-6">Add some items to your cart to get started.</p>
-                                <a href="{% url 'menu' %}" class="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition">
-                                    Continue Shopping
-                                </a>
-                            </div>
-                        `;
-                    }
-                }
-            },
-            error: function(error) {
-                console.error('Error removing item from cart:', error);
-                notyf.error('An error occurred while removing the item from the cart');
-            },
-            complete: function() {
-                // Re-enable the button and restore original icon
-                button.disabled = false;
-                button.innerHTML = `
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                `;
-            }
-        });
+        if (!this.cartContainer) return;
+        
+        this.csrfToken = this.getCookie('csrftoken');
+        this.initEventListeners();
     }
-    
-    // Add event listener to all remove buttons
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add event listener for remove cart item buttons
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('remove-cart-item')) {
-                const cartItemId = e.target.closest('.remove-cart-item').dataset.cartItemId;
-                removeCartItem(cartItemId);
+
+    getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    initEventListeners() {
+        // Delegate all cart item events
+        this.cartContainer.addEventListener('click', async (e) => {
+            const cartItem = e.target.closest('.cart-item');
+            if (!cartItem) return;
+
+            const itemId = cartItem.dataset.itemId;
+
+            if (e.target.closest('.remove-item')) {
+                e.preventDefault();
+                await this.removeItem(itemId, cartItem);
+            } 
+            else if (e.target.closest('.decrease')) {
+                e.preventDefault();
+                await this.updateQuantity(itemId, -1);
+            }
+            else if (e.target.closest('.increase')) {
+                e.preventDefault();
+                await this.updateQuantity(itemId, 1);
             }
         });
 
-        // Add event listener for remove buttons
-        const removeButtons = document.querySelectorAll('.text-red-500');
-        removeButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
+        // Clear cart button
+        const clearBtn = document.getElementById('clear-cart-btn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                const cartItemId = parseInt(this.getAttribute('data-cart-item-id'));
-                removeCartItem(cartItemId);
+                this.clearCart();
             });
-        });
-    });
-
-    function clearCart() {
-        // Show confirmation dialog
-        if (!confirm('Are you sure you want to clear your cart?')) {
-            return;
         }
 
-        // Make the API request
-        $.ajax({
-            url: '/cart/clear/',
-            type: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-            },
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Show success message
-                    notyf.success('Cart cleared successfully');
-                    
-                    // Replace the cart items with a cart empty message
-                    if (cartItemsElement) {
-                        cartCountElement.textContent = response.cart_count;
-                        cartItemsElement.classList.add('hidden');
-                        clearCartButton.classList.add('hidden');
-                        emptyContainer.innerHTML = `
-                            <div class="text-center py-12">
-                                <h2 class="text-2xl font-bold mb-4">Your cart is empty</h2>
-                                <p class="text-gray-600 mb-6">Add some items to your cart to get started.</p>
-                                <a href="{% url 'menu' %}" class="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition">
-                                    Continue Shopping
-                                </a>
-                            </div>
-                        `;
-                    }
-                    
-                }
-            },
-            error: function(error) {
-                console.error('Error clearing cart:', error);
-                notyf.error('An error occurred while clearing the cart');
-            }
-        });
+        // Checkout button
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = '/checkout/';
+            });
+        }
     }
 
+    async updateQuantity(itemId, change) {
+    const cartItem = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+    if (!cartItem) return;
+
+    const quantityDisplay = cartItem.querySelector('.quantity-display');
+    const currentQty = parseInt(quantityDisplay.textContent);
+    const newQty = currentQty + change;
+
+    if (newQty < 1) {
+        alert('Quantity cannot be less than 1');
+        return;
+    }
+
+    // Optimistic UI update
+    quantityDisplay.textContent = newQty;
+    cartItem.querySelector('.item-quantity').textContent = newQty;
+
+    try {
+        const response = await fetch(`/cart/update/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': this.csrfToken,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json' 
+            },
+            body: JSON.stringify({ quantity: newQty })
+        });
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const errorText = await response.text();
+            throw new Error(`Server returned: ${errorText.substring(0, 100)}`);
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        }
+
+        // Update UI
+        cartItem.querySelector('.item-subtotal').textContent = `₦${(data.price * newQty).toFixed(2)}`;
+        this.updateCartTotals(data.total, data.cart_count);
+        
+    } catch (error) {
+        console.error('Update error:', error);
+        // Revert optimistic update
+        quantityDisplay.textContent = currentQty;
+        cartItem.querySelector('.item-quantity').textContent = currentQty;
+        alert(`Error: ${error.message}`);
+    }
+}
+
+    async removeItem(itemId, cartItemElement) {
+        if (!confirm('Remove this item from cart?')) return;
+
+        const button = cartItemElement.querySelector('.remove-item');
+        if (button) button.disabled = true;
+
+        try {
+            const response = await fetch(`/cart/remove/${itemId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.csrfToken,
+                    'Accept': 'application/json'
+                }
+            });
+
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const errorText = await response.text();
+                throw new Error(`Server returned: ${errorText.substring(0, 100)}`);
+            }
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Removal failed');
+            }
+
+            cartItemElement.remove();
+            this.updateCartTotals(data.total, data.cart_count);
+            
+            if (data.cart_count === 0) {
+                this.showEmptyCart();
+            }
+            
+        } catch (error) {
+            console.error('Remove error:', error);
+            alert(`Error: ${error.message}`);
+        } finally {
+            if (button) button.disabled = false;
+        }
+    }
+
+    async clearCart() {
+        if (!confirm('Are you sure you want to clear your entire cart?')) return;
+
+        try {
+            const response = await fetch('/cart/clear/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.status !== 'success') {
+                throw new Error(data.message || 'Clear failed');
+            }
+
+            document.getElementById('cart-content').remove();
+            this.showEmptyCart();
+            this.updateCartTotals(0, 0);
+            
+            alert('Cart cleared successfully');
+        } catch (error) {
+            console.error('Error clearing cart:', error);
+            alert('Failed to clear cart: ' + error.message);
+        }
+    }
+
+    updateCartTotals(total, cartCount) {
+        // Update subtotal display
+        const subtotalElement = document.getElementById('cart-subtotal');
+        if (subtotalElement) {
+            subtotalElement.textContent = parseFloat(total).toFixed(2);
+        }
+
+        // Update checkout total
+        const checkoutTotal = document.getElementById('checkout-total');
+        if (checkoutTotal) {
+            checkoutTotal.textContent = parseFloat(total).toFixed(2);
+        }
+
+        // Update cart count in header
+        if (this.cartCountElement) {
+            this.cartCountElement.textContent = cartCount;
+        }
+    }
+
+    showEmptyCart() {
+        this.cartContainer.innerHTML = `
+            <div id="empty-cart" class="text-center py-12">
+                <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold mb-2">Your cart is empty</h2>
+                <p class="text-gray-600 mb-6">Looks like you haven't added anything to your cart yet</p>
+                <a href="{% url 'menu' %}" class="inline-block bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-lg transition-colors">
+                    Browse Menu
+                </a>
+            </div>
+        `;
+    }
+
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const loginModal = document.getElementById('loginModal');
+    const loginForm = document.getElementById('login-form');
+    document.getElementById('checkoutButton').addEventListener('click', function(e) {  
+        e.preventDefault();
+        if ("{{request.user.is_authenticated}}" === "True") {
+                window.location.href = "/checkout/"; 
+        } else {
+            loginModal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+    });
+    document.getElementById('loginModal').addEventListener('click', function(e) {
+        if (e.target.id === 'loginModal') {
+            loginModal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+    });
+    
+    if (loginForm) {
+        loginForm.onsubmit = async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: "POST",
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('loginModal').classList.add('hidden');
+                window.location.href = data.redirect_url;
+            } else {
+                document.getElementById('loginError').innerText = data.message;
+            }
+        };
+    } 
+
+    try {
+        new CartManager();
+    } catch (error) {
+        console.error('Error initializing cart:', error);
+    }
+});
 </script>
-{% endblock customJS %}
+{% endblock %}
