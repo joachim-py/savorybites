@@ -112,11 +112,9 @@
                         <span class="cursor-pointer bg-amber-600 text-white px-6 py-2 rounded hover:bg-amber-700 transition">
                             <i class="fas fa-shopping-cart"></i>
                         </span>
-                        {% if cart_count => 1 %}
-                        <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                        <span id="cartCount" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                             {{ cart_count }}
                         </span>
-                        {% endif %}
                     </a>
                     <!-- User Dropdown -->
                     <div class="relative md:block hidden">
@@ -236,7 +234,13 @@
             if (cartCount) {
                 cartCount.textContent = count;
             }
+            if (count > 0){
+                cartCount.classList.remove('hidden');
+            } else {
+                cartCount.classList.add('hidden');
+            }
         }
+        
         
         // Menu Category Filter
         const categoryBtns = document.querySelectorAll('.menu-category-btn');
@@ -322,7 +326,7 @@
             });
         });
 
-        // Example of updating cart count
+        // updating cart count
         updateCartCount({{ cart_count }});
 
 
