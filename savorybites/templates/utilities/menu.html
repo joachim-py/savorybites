@@ -16,7 +16,7 @@
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-2">
                             <h3 class="text-xl font-bold">{{item.menu_item.name}}</h3>
-                            <span class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">${{item.menu_item.price}}</span>
+                            <span class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">₦{{item.menu_item.price}}</span>
                         </div>
                         <p class="text-gray-600 mb-4">{{item.menu_item.description}}</p>
                         <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" onclick="addToCart({{item.menu_item.id}})">Add to Order</button>
@@ -54,7 +54,7 @@
                         <div class="p-4 flex-1">
                             <div class="flex justify-between items-start">
                                 <h3 class="text-lg font-bold">{{item.name}}</h3>
-                                <span class="text-amber-600 font-bold">${{item.price}}</span>
+                                <span class="text-amber-600 font-bold">₦{{item.price}}</span>
                             </div>
                             <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
                         </div>
@@ -75,7 +75,7 @@
                         <div class="p-4 flex-1">
                             <div class="flex justify-between items-start">
                                 <h3 class="text-lg font-bold">{{item.name}}</h3>
-                                <span class="text-amber-600 font-bold">${{item.price}}</span>
+                                <span class="text-amber-600 font-bold">₦{{item.price}}</span>
                             </div>
                             <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
                         </div>
@@ -96,7 +96,7 @@
                         <div class="p-4 flex-1">
                             <div class="flex justify-between items-start">
                                 <h3 class="text-lg font-bold">{{item.name}}</h3>
-                                <span class="text-amber-600 font-bold">${{item.price}}</span>
+                                <span class="text-amber-600 font-bold">₦{{item.price}}</span>
                             </div>
                             <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
                         </div>
@@ -117,9 +117,9 @@
                         <div class="p-4 flex-1">
                             <div class="flex justify-between items-start">
                                 <h3 class="text-lg font-bold">{{item.name}}</h3>
-                                <span class="text-amber-600 font-bold">${{item.price}}</span>
+                                <span class="text-amber-600 font-bold">₦{{item.price}}</span>
                             </div>
-                            <p class="text-gray-600 text-sm mt-1">H{{item.description}}</p>
+                            <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
                         </div>
                     </div>
                     <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
@@ -171,6 +171,22 @@
             });
         });
 
+        // CSRF token for AJAX calls
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
         function addToCart(itemId) {
             const button = event.currentTarget;
             const originalText = button.textContent;
@@ -180,14 +196,19 @@
             button.disabled = true;
             button.classList.add('bg-amber-400');
 
-            // Send AJAX request
+            // Get CSRF token
+            const csrftoken = getCookie('csrftoken');
+            
+            // Send AJAX request with proper headers
             $.ajax({
                 url: '{% url "add_to_cart" %}',
-                method: 'POST',
+                type: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
                 data: {
-                    "menu_item_id": itemId,
-                    "quantity": 1,
-                    "csrfmiddlewaretoken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                    'menu_item_id': itemId,
+                    'quantity': 1
                 },
                 success: function(response) {
                     if (response.status === 'success') {
@@ -224,8 +245,11 @@
                     button.classList.remove('bg-amber-400');
                     button.classList.add('bg-amber-600');
                     button.disabled = false;
+                    
+                    // Log detailed error
+                    console.error('Error:', xhr.responseText);
                 }
-            })
+            });
         }
     </script>
 

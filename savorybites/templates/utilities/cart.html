@@ -212,27 +212,55 @@
             }
         }
 
-        updateCartTotals(total, cartCount) {
-            // Update subtotal display
-            const subtotalElement = document.getElementById('cart-subtotal');
-            if (subtotalElement) {
-                subtotalElement.textContent = parseFloat(total).toFixed(2);
-            }
+        async updateQuantity(itemId, change) {
+            const cartItemElement = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+            if (!cartItemElement) return;
 
-            // Update checkout total
-            const checkoutTotal = document.getElementById('checkout-total');
-            if (checkoutTotal) {
-                checkoutTotal.textContent = parseFloat(total).toFixed(2);
-            }
+            const quantityDisplay = cartItemElement.querySelector('.quantity-display');
+            const currentQuantity = parseInt(quantityDisplay.textContent);
+            const newQuantity = currentQuantity + change;
 
-            // Update cart count in header
-            if (this.cartCountElement) {
-                if (cartCount > 0) {
-                    this.cartCountElement.textContent = cartCount;
-                    this.cartCountElement.style.display = 'inline-block'; // or whatever display it should have
-                } else {
-                    this.cartCountElement.style.display = 'none';
+            // Don't allow quantity to go below 1
+            if (newQuantity < 1) return;
+
+            try {
+                const response = await fetch(`/cart/update/${itemId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        quantity: newQuantity
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Update failed');
                 }
+
+                // Update the displayed quantity
+                quantityDisplay.textContent = newQuantity;
+                
+                // Update the "× quantity" text
+                const quantityText = cartItemElement.querySelector('.item-quantity');
+                if (quantityText) quantityText.textContent = newQuantity;
+                
+                // Update the subtotal for this item
+                const itemSubtotal = cartItemElement.querySelector('.item-subtotal');
+                if (itemSubtotal) {
+                    itemSubtotal.textContent = `₦${(data.price * newQuantity).toFixed(2)}`;
+                }
+
+                // Update the cart totals
+                this.updateCartTotals(data.total, data.cart_count);
+
+            } catch (error) {
+                console.error('Update error:', error);
+                alert(`Error: ${error.message}`);
             }
         }
 

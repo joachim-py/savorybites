@@ -83,6 +83,11 @@ def add_to_cart(request):
             
         menu_item = get_object_or_404(Menu, id=menu_item_id)
         
+        # Ensure session exists
+        if not request.session.session_key:
+            request.session.create()
+        session_key = request.session.session_key
+
         # Get or create cart item
         if request.user.is_authenticated:
             cart_item, created = CartItem.objects.get_or_create(
@@ -91,7 +96,6 @@ def add_to_cart(request):
                 defaults={'quantity': 1}
             )
         else:
-            session_key = request.session.session_key or request.session.create()
             cart_item, created = CartItem.objects.get_or_create(
                 session_key=session_key,
                 menu_item=menu_item,
@@ -102,16 +106,23 @@ def add_to_cart(request):
             cart_item.quantity += 1
             cart_item.save()
 
-        # Calculate response data
+        # Calculate cart count
+        if request.user.is_authenticated:
+            cart_count = CartItem.objects.filter(user=request.user).count()
+        else:
+            cart_count = CartItem.objects.filter(session_key=session_key).count()
+
         response_data = {
             'status': 'success',
             'message': 'Item added to cart',
-            'item_id': cart_item.id,
-            'quantity': cart_item.quantity,
-            'price': float(menu_item.price),
-            'subtotal': float(menu_item.price * cart_item.quantity),
-            'cart_count': request.user.cart_items.count() if request.user.is_authenticated 
-                          else CartItem.objects.filter(session_key=session_key).count()
+            'cart_count': cart_count,
+            'item': {
+                'id': cart_item.id,
+                'name': menu_item.name,
+                'quantity': cart_item.quantity,
+                'price': str(menu_item.price),
+                'subtotal': str(menu_item.price * cart_item.quantity)
+            }
         }
         
         return JsonResponse(response_data)
@@ -325,10 +336,8 @@ def payment(request, order_id):
         if not email:
             return JsonResponse({'status': 'error', 'message': 'Customer email is required'})
 
-        usd_amount = float(order.total_price)
-        exchange_rate = 1645
-        ngn_amount = usd_amount * exchange_rate
-        amount_in_kobo = int(ngn_amount * 100)
+        amount = float(order.total_price)
+        amount_in_kobo = int(amount * 100)
 
         headers = {
             'Authorization': f'Bearer {config("PAYSTACK_SECRET_KEY").strip()}',
