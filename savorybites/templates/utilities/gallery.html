@@ -1,5 +1,7 @@
-{% load static %}
+{% extends 'layout.html' %}
 
+{% block content %}
+    {% include './intro.html' %}
     <!-- Gallery Section -->
     <section id="gallery" class="py-16 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4">
@@ -22,3 +24,4 @@
         </div>
     </section>
     <!-- End of Gallery Section -->
+{% endblock content %}

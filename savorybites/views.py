@@ -8,7 +8,9 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.views.decorators.http import require_http_methods
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_protect, csrf_exempt 
@@ -498,7 +500,7 @@ def order_details_json(request, order_id):
         return JsonResponse({'status': 'error', 'message': 'Order not found'}, status=404)
 
 def menu(request):
-    # Ensure session exists for guest users
+    # Ensuring session exists for guest users
     session_key = request.session.session_key
     if not session_key:
         request.session.save()
@@ -519,12 +521,16 @@ def menu(request):
         cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
 
     cart_count = cart_items.count()
-
-    return render(request, 'layout.html', {
+    
+    context = {
         'menu_items': menu_items,
         'categories': categories,
         'cart_count': cart_count,
-    })
+        'title': 'Menu',
+        'description': 'Explore our menu of delectable dishes.',
+    }
+
+    return render(request, 'layout.html', context)
 
 def contact_us(request):
     if request.method == 'POST':
@@ -536,30 +542,62 @@ def contact_us(request):
         )
         messages.success(request, 'Message sent successfully!')
         return redirect('contact_us')
-    return render(request, 'utilities/contact.html')
+    context = {
+        'title': 'Contact Us',
+        'description': 'Contact us for any inquiries or feedback.',
+    }
+    return render(request, 'utilities/contact.html', context)
 
+@require_http_methods(["POST"])
 def book_reservation(request):
-    if request.method == 'POST':
-        Reservation.objects.create(
-            customer_name=request.POST.get('name'),
-            customer_email=request.POST.get('email'),
-            customer_phone=request.POST.get('phone'),
-            number_of_guests=request.POST.get('guests'),
-            reservation_date=request.POST.get('date'),
-            reservation_time=request.POST.get('time'),
-            special_requests=request.POST.get('special_request', '')
+    try:
+        # Get form data
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        guests = request.POST.get('guests')
+        date = request.POST.get('date')
+        time = request.POST.get('time')
+        special_requests = request.POST.get('special_request', '')
+        
+        # Input validation
+        if not all([name, email, phone, guests, date, time]):
+            return JsonResponse({'status': 'error', 'message': 'All fields are required'}, status=400)
+            
+        try:
+            validate_email(email)
+        except ValidationError:
+            return JsonResponse({'status': 'error', 'message': 'Please enter a valid email address'}, status=400)
+            
+        # Create reservation
+        reservation = Reservation.objects.create(
+            customer_name=name,
+            customer_email=email,
+            customer_phone=phone,
+            number_of_guests=guests,
+            reservation_date=date,
+            reservation_time=time,
+            special_requests=special_requests,
+            user=request.user
         )
-        messages.success(request, 'Reservation booked successfully!')
-        return redirect('reservations')
-    return render(request, 'utilities/reservation.html')
+        
+        return JsonResponse({
+            'status': 'success', 
+            'message': 'Your reservation has been booked successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 def reservations(request):
     if request.user.is_authenticated:
         reservations = Reservation.objects.filter(
-            customer_email=request.user.email
-        ).order_by('-reservation_date')
+            user=request.user
+        ).order_by('-reservation_date')        
         return render(request, 'utilities/reservations.html', {
-            'reservations': reservations
+            'reservations': reservations,
+            'title': 'Reservations',
+            'description': 'Make your reservations here',
         })
     return redirect('login')
 
@@ -581,9 +619,12 @@ def reviews(request):
 
 def gallery(request):
     gallery_items = Gallery.objects.all().order_by('-upload_date')
-    return render(request, 'utilities/gallery.html', {
-        'gallery': gallery_items
-    })
+    context = {
+        'gallery': gallery_items,
+        'title': 'Gallery',
+        'description': 'Our Gallery',
+    }
+    return render(request, 'utilities/gallery.html', context)
 
 def login(request):
     if request.method == 'POST':
@@ -652,26 +693,49 @@ def logout(request):
 
 def signup(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        confirm_password = request.POST.get('confirm_password')
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
         
+        # Validate required fields
+        if not all([username, email, password, confirm_password]):
+            messages.error(request, 'All fields are required')
+            return redirect('signup')
+            
+        # Validate email format
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            messages.error(request, 'Please enter a valid email address')
+            return redirect('signup')
+            
+        # Check if email already exists
         if User.objects.filter(email=email).exists():
             messages.error(request, 'Email already registered')
             return redirect('signup')
+            
+        # Check if username already exists
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Username already taken')
             return redirect('signup')
+            
+        # Validate username
         if len(username) < 3:
             messages.error(request, 'Username must be at least 3 characters long')
             return redirect('signup')
-        if len(password) < 6:
-            messages.error(request, 'Password must be at least 6 characters long')
-            return redirect('signup')
+            
         if not username.isalnum():
             messages.error(request, 'Username must be alphanumeric')
             return redirect('signup')
+            
+        # Validate password
+        if not password:
+            messages.error(request, 'Password is required')
+            return redirect('signup')
+            
+        if len(password) < 6:
+            messages.error(request, 'Password must be at least 6 characters long')
+            return redirect('signup')
+            
         if password != confirm_password:
             messages.error(request, 'Passwords do not match')
             return redirect('signup')
@@ -711,8 +775,9 @@ def profile(request):
 
         orders = Order.objects.filter(user=request.user).order_by('-order_date')
         payments = Payment.objects.filter(order__user=request.user).order_by('-payment_date')
+        reservations = Reservation.objects.filter(user=request.user).order_by('-created_at')
 
-         # Paginate orders
+        # Paginate orders
         orders_paginator = Paginator(orders, 4)
         orders_page_number = request.GET.get('orders_page')
         orders_page_obj = orders_paginator.get_page(orders_page_number)
@@ -721,6 +786,11 @@ def profile(request):
         payments_paginator = Paginator(payments, 4)
         payments_page_number = request.GET.get('payments_page')
         payments_page_obj = payments_paginator.get_page(payments_page_number)
+        
+        # Paginate reservations
+        reservations_paginator = Paginator(reservations, 4)
+        reservations_page_number = request.GET.get('reservations_page')
+        reservations_page_obj = reservations_paginator.get_page(reservations_page_number)
         
         
         # ✏ Handle profile update
@@ -748,11 +818,11 @@ def profile(request):
             messages.success(request, 'Profile updated successfully!')
             return redirect('profile')
 
-        return render(request, 'utilities/profile.html', {
+        context = {
             'profile': profile,
             'orders': orders_page_obj,
             'payments': payments_page_obj,
+            'reservations': reservations_page_obj,
             'cart_count': cart_count
-        })
-        
-
+        }
+        return render(request, 'utilities/profile.html', context)

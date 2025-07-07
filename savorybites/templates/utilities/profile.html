@@ -1,12 +1,64 @@
 {% extends "layout.html" %}
 
 {% block title %}Profile Dashboard{% endblock title %}
-{% block cart %} {% endblock cart %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto mt-12">
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-    <div class="col-span-1 bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
+<div class="w-90 mx-auto md:mx-10 mt-12">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+
+    <!-- Sidebar -->
+    <div class="col-span-3 md:col-span-1 bg-white rounded-lg shadow-md p-6 pt-3" id="sidebar">
+      <div class="flex flex-col items-center">
+        <div class="w-24 h-24 rounded-full bg-amber-100 flex items-center justify-center mb-2">
+          <span class="text-4xl text-amber-600 font-bold">
+            {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+          </span>
+        </div>
+        <h2 class="text-medium font-bold text-amber-800 mb-1">{{ user.first_name }} {{ user.last_name }}</h2>
+      </div>
+      <div>
+        <p class="text-gray-600 mb-1 text-sm"> <i class="fa fa-envelope"></i> {{ user.email }} </p>
+        <p class="text-gray-600 mb-1 text-sm"> <i class="fa fa-phone"></i> {{ profile.phone_number }}</p>
+      </div>
+      <hr />
+      <ul class="space-y-4 my-3 text-sm">
+        <li>
+          <a href="#" data-section="profile" class="sidebar-link text-amber-600 font-semibold flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+            <span>My Profile</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" data-section="orders" class="sidebar-link text-gray-600 hover:text-amber-600 flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+            </svg>
+            <span>My Orders</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" data-section="payments" class="sidebar-link text-gray-600 hover:text-amber-600 flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+              <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" />
+            </svg>
+            <span>My Payments</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" data-section="reservations" class="sidebar-link text-gray-600 hover:text-amber-600 flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+            </svg>
+            <span>My Reservations</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div id="profile-section" class="col-span-3 bg-white rounded-lg shadow-md p-8 pt-3">
       {% if messages %}
         {% for message in messages %}
             <div class="my-3 w-full px-4 py-3 rounded text-sm {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">
@@ -16,15 +68,9 @@
       {% endif %}
 
       <!-- Profile Card -->
-      <div class="w-24 h-24 rounded-full bg-amber-100 flex items-center justify-center mb-4">
-        <span class="text-4xl text-amber-600 font-bold">
-          {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
-        </span>
+      <div class="flex items-center space-x-4">
+        <h2 class="text-xl font-bold text-amber-800 mb-1">My Profile</h2>
       </div>
-      <h2 class="text-xl font-bold text-amber-800 mb-1">{{ user.first_name }} {{ user.last_name }}</h2>
-      <p class="text-gray-600 mb-2">{{ user.email }}</p>
-      <p class="text-gray-600 mb-2">{{ profile.phone_number }}</p>
-      <p class="text-gray-600 mb-2">{{ profile.address }}</p>
       <form method="post" class="w-full space-y-4">
         {% csrf_token %}
         <div>
@@ -53,73 +99,70 @@
       </form>
     </div>
 
-    
-
-    <div class="col-span-1 md:col-span-2">        
-      <!-- Orders Table -->
-      <div class="bg-white rounded-lg shadow-md p-6 my-8">
-        <h3 class="text-xl font-semibold text-gray-800 mb-4">My Orders</h3>
+    <!-- Orders Section -->
+    <div id="orders-section" class="hidden col-span-3"> 
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-bold text-amber-800 mb-4">My Orders</h3>
         {% if orders %}
           <div class="overflow-x-auto">
             <table class="min-w-full bg-white border border-gray-200 rounded">
-              <thead>
+              <thead class="bg-gray-50">
                 <tr>
-                  <th class="px-4 py-2 border-b">OrderID</th>
-                  <th class="px-4 py-2 border-b">Date</th>
-                  <th class="px-4 py-2 border-b">Status</th>
-                  <th class="px-4 py-2 border-b">Delivery Date</th>
-                  <th class="px-4 py-2 border-b">Delivery Status</th>
-                  <th class="px-4 py-2 border-b">Total</th>
-                  <th class="px-4 py-2 border-b">Action</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OrderID</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery Date</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody class="bg-white divide-y divide-gray-200">
                 {% for order in orders %}
-                    <td class="px-4 py-2 border-b">
-                      <a href="#" 
-                        class="text-amber-400 hover:text-amber-500"
-                        onclick="showOrderModal(event, '{{ order.id }}')"
-                      >{{ order.order_id }}</a>
-                    </td>
-                    <td class="px-4 py-2 border-b">{{ order.order_date|date:"M d, Y" }}</td>
-                    <td class="px-4 py-2 border-b"> {{ order.status }}</td>
-                    <td class="px-4 py-2 border-b">{{ order.delivery.delivery_date|date:"M d, Y" }}</td>
-                     <td class="px-4 py-2 border-b">
-                      {% if order.delivery.delivery_status == "delivered" %}
-                        <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700">{{ order.delivery.delivery_status|capfirst }}</span>
-                      {% elif order.delivery.delivery_status == "scheduled" or order.delivery.delivery_status == "in_progress" %}
-                        <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-700">{{ order.delivery.delivery_status|capfirst }}</span>
-                      {% else %}
-                        <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-700">{{ order.delivery.delivery_status|capfirst }}</span>
-                      {% endif %}
-                    </td>
-                    <td class="px-4 py-2 border-b">${{ order.total_price }}</td>
-                    {% if order.status == 'pending' and order.payment_status == 'pending' %}
-                      <td>
-                      <a href="{% url 'payment' order.id %}" class="inline-block text-xs bg-amber-600 text-white px-2 py-1 rounded hover:bg-amber-700 transition">
-                          Pay Now
-                      </a>
+                    <tr class="hover:bg-gray-50 text-xs">
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <a href="#" 
+                          class="text-amber-400 hover:text-amber-500"
+                          onclick="showOrderModal(event, '{{ order.id }}')"
+                        >{{ order.order_id }}</a>
                       </td>
-                      {% else %}
-                      <td>
-                        <a class="inline-block bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"></a>
+                      <td class="px-6 py-4 whitespace-nowrap">{{ order.order_date|date:"M d, Y" }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap"> {{ order.status }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap">{{ order.delivery.delivery_date|date:"M d, Y" }}</td>
+                       <td class="px-6 py-4 whitespace-nowrap">
+                        {% if order.delivery.delivery_status == "delivered" %}
+                          <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700">{{ order.delivery.delivery_status|capfirst }}</span>
+                        {% elif order.delivery.delivery_status == "scheduled" or order.delivery.delivery_status == "in_progress" %}
+                          <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-700">{{ order.delivery.delivery_status|capfirst }}</span>
+                        {% else %}
+                          <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-700">{{ order.delivery.delivery_status|capfirst }}</span>
+                        {% endif %}
                       </td>
-                  {% endif %}
-                  
-                  </tr>
+                      <td class="px-6 py-4 whitespace-nowrap">₦{{ order.total_price }}</td>
+                      {% if order.status == 'pending' and order.payment_status == 'pending' %}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                        <a href="{% url 'payment' order.id %}" class="inline-block text-xs bg-amber-600 text-white px-2 py-1 rounded hover:bg-amber-700 transition">
+                            Pay Now
+                        </a>
+                        </td>
+                    {% endif %}
+                    
+                    </tr>
                 {% endfor %}
               </tbody>
               
             </table>
-              <div class="flex justify-end items-center space-x-3">
+                <div class="flex justify-end items-center space-y-3 space-x-3">
                   {% if orders.has_previous %}
-                      <a href="?orders_page={{ orders.previous_page_number }}&payments_page={{ payments.number }}" class="bg-amber-500 text-white hover:bg-amber-700 px-2 py-1 rounded-lg">Prev</a>
+                      <a href="?tab=orders&orders_page={{ orders.previous_page_number }}&payments_page={{ payments.number }}&reservations_page={{ reservations.number }}" 
+                         class="bg-amber-500 text-white hover:bg-amber-700 px-2 py-1 mt-1 rounded-lg">Prev</a>
                   {% endif %}
 
                   <span>Page {{ orders.number }} of {{ orders.paginator.num_pages }}</span>
 
                   {% if orders.has_next %}
-                      <a href="?orders_page={{ orders.next_page_number }}&payments_page={{ payments.number }}" class="bg-amber-500 text-white hover:bg-amber-700 px-2 py-1 rounded-lg">Next</a>
+                      <a href="?tab=orders&orders_page={{ orders.next_page_number }}&payments_page={{ payments.number }}&reservations_page={{ reservations.number }}" 
+                         class="bg-amber-500 text-white hover:bg-amber-700 px-2 py-1 mt-1 rounded-lg">Next</a>
                   {% endif %}
                 </div>
           </div>
@@ -140,63 +183,191 @@
         </div>
       </div>
 
-      <!-- Payments Table -->
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-xl font-semibold text-gray-800 mb-4">Payment Reports</h3>
-        {% if payments %}
-          <div class="overflow-x-auto">
-            <table class="min-w-full bg-white border border-gray-200 rounded">
-              <thead>
-                <tr>
-                  <th class="px-4 py-2 border-b">OrderID</th>
-                  <th class="px-4 py-2 border-b">Reference</th>
-                  <th class="px-4 py-2 border-b">Date</th>
-                  <th class="px-4 py-2 border-b">Amount</th>
-                  <th class="px-4 py-2 border-b">Status</th>
-                  <th class="px-4 py-2 border-b">Method</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for payment in payments %}
-                  <tr>
-                    <td class="px-4 py-2 border-b">{{ payment.order.order_id }}</td>
-                    <td class="px-4 py-2 border-b">{{ payment.reference }}</td>
-                    <td class="px-4 py-2 border-b">{{ payment.payment_date|date:"M d, Y" }}</td>
-                    <td class="px-4 py-2 border-b">${{ payment.amount }}</td>
-                    <td class="px-4 py-2 border-b">
-                      {% if payment.status == "completed" %}
-                        <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700">{{ payment.status|capfirst }}</span>
-                      {% elif payment.status == "pending" %}
-                        <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-700">{{ payment.status|capfirst }}</span>
-                      {% else %}
-                        <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-700">{{ payment.status|capfirst }}</span>
-                      {% endif %}
-                    </td>
-                    <td class="px-4 py-2 border-b">{{ payment.payment_method }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-              <div class="flex justify-end items-center space-y-3 space-x-3">
-                {% if payments.has_previous %}
-                    <a href="?payments_page={{ payments.previous_page_number }}&orders_page={{ orders.number }}" class="bg-amber-500 text-white hover:bg-amber-700 px-2 py-1 rounded-lg">Prev</a>
-                {% endif %}
-
-                <span>Page {{ payments.number }} of {{ payments.paginator.num_pages }}</span>
-
-                {% if payments.has_next %}
-                    <a href="?payments_page={{ payments.next_page_number }}&orders_page={{ orders.number }}" class="bg-amber-500 text-white hover:bg-amber-700 px-2 py-1 rounded-lg">Next</a>
-                {% endif %}
-            </div>
-          </div>
-        {% else %}
-          <p class="text-gray-500">No payment records found.</p>
-        {% endif %}
-      </div>
-      
     </div>
+
+       <!-- Reservations Section -->
+       <div id="reservations-section" class="hidden col-span-3">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="text-xl font-bold text-amber-800 mb-4">My Reservations</h3>
+          
+          {% if reservations %}  
+            <div class="overflow-x-auto">
+              <table class="min-w-full bg-white divide-y divide-gray-200 rounded">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guests</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Special Requests</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  {% for reservation in reservations %}
+                    <tr class="hover:bg-gray-50 text-xs">
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-xs font-medium text-gray-900">{{ reservation.reservation_date|date:"M d, Y" }}</div>
+                        <div class="text-xs text-gray-500">{{ reservation.reservation_time|time:"g:i A" }}</div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-xs text-gray-900">{{ reservation.number_of_guests }} {% if reservation.number_of_guests == 1 %}person{% else %}people{% endif %}</div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          {% if reservation.status == 'confirmed' %}bg-green-100 text-green-800
+                          {% elif reservation.status == 'pending' %}bg-yellow-100 text-yellow-800
+                          {% else %}bg-gray-100 text-gray-800{% endif %}">
+                          {{ reservation.status|default:"pending"|title }}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">
+                          {% if reservation.special_requests %}
+                            {{ reservation.special_requests|truncatechars:50 }}
+                          {% else %}
+                            <span class="text-gray-400">No special requests</span>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              
+              <!-- Pagination -->
+              {% if reservations.has_other_pages %}
+                <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                  <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p class="text-sm text-gray-700">
+                        Showing <span class="font-medium">{{ reservations.start_index }}</span>
+                        to <span class="font-medium">{{ reservations.end_index }}</span>
+                        of <span class="font-medium">{{ reservations.paginator.count }}</span> results
+                      </p>
+                    </div>
+                    <div>
+                      <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        {% if reservations.has_previous %}
+                          <a href="?tab=reservations&reservations_page={{ reservations.previous_page_number }}&orders_page={{ orders.number }}&payments_page={{ payments.number }}" 
+                            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Previous</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                          </a>
+                        {% endif %}
+                        
+                        {% for num in reservations.paginator.page_range %}
+                          {% if reservations.number == num %}
+                            <a href="?tab=reservations&reservations_page={{ num }}&orders_page={{ orders.number }}&payments_page={{ payments.number }}" 
+                              class="z-10 bg-amber-50 border-amber-500 text-amber-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                              {{ num }}
+                            </a>
+                          {% elif num > reservations.number|add:'-3' and num < reservations.number|add:'3' %}
+                            <a href="?tab=reservations&reservations_page={{ num }}&orders_page={{ orders.number }}&payments_page={{ payments.number }}" 
+                              class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                              {{ num }}
+                            </a>
+                          {% endif %}
+                        {% endfor %}
+                        
+                        {% if reservations.has_next %}
+                          <a href="?tab=reservations&reservations_page={{ reservations.next_page_number }}&orders_page={{ orders.number }}&payments_page={{ payments.number }}" 
+                            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Next</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                          </a>
+                        {% endif %}
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="text-center py-12">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">No reservations</h3>
+              <p class="mt-1 text-sm text-gray-500">You haven't made any reservations yet.</p>
+              <div class="mt-6">
+                <a href="{% url 'reservations' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                  <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                  </svg>
+                  Make a Reservation
+                </a>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    <!-- Payments Section -->
+    <div id="payments-section" class="hidden col-span-3"> 
+      <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="text-xl font-bold text-amber-800 mb-4">Payment Reports</h3>
+          {% if payments %}
+            <div class="overflow-x-auto">
+              <table class="min-w-full bg-white border border-gray-200 rounded">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OrderID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  {% for payment in payments %}
+                    <tr class="hover:bg-gray-50 text-xs">
+                      <td class="px-6 py-4 whitespace-nowrap">{{ payment.order.order_id }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap">{{ payment.reference }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap">{{ payment.payment_date|date:"M d, Y" }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap">₦{{ payment.amount }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        {% if payment.status == "completed" %}
+                          <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700">{{ payment.status|capfirst }}</span>
+                        {% elif payment.status == "pending" %}
+                          <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-700">{{ payment.status|capfirst }}</span>
+                        {% else %}
+                          <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-700">{{ payment.status|capfirst }}</span>
+                        {% endif %}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">{{ payment.payment_method }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+                <div class="flex justify-end items-center space-y-3 space-x-3">
+                  {% if payments.has_previous %}
+                      <a href="?tab=payments&payments_page={{ payments.previous_page_number }}&orders_page={{ orders.number }}&reservations_page={{ reservations.number }}" 
+                         class="bg-amber-500 text-white hover:bg-amber-700 px-2 py-1 mt-1 rounded-lg">Prev</a>
+                  {% endif %}
+
+                  <span>Page {{ payments.number }} of {{ payments.paginator.num_pages }}</span>
+
+                  {% if payments.has_next %}
+                      <a href="?tab=payments&payments_page={{ payments.next_page_number }}&orders_page={{ orders.number }}&reservations_page={{ reservations.number }}" 
+                         class="bg-amber-500 text-white hover:bg-amber-700 px-2 py-1 mt-1 rounded-lg">Next</a>
+                  {% endif %}
+              </div>
+            </div>
+          {% else %}
+            <p class="text-gray-500">No payment records found.</p>
+          {% endif %}
+        </div>
+        
+      </div>
+    </div>
+
   </div>
 </div>
+
 {% endblock %}
 
 {% block customJS %}
@@ -217,7 +388,7 @@
               <div><strong>Date:</strong> ${data.order.order_date}</div>
               <div><strong>Status:</strong> ${data.order.status}</div>
               <div><strong>Payment Status:</strong> ${data.order.payment_status}</div>
-              <div><strong>Total:</strong> $${data.order.total_price}</div>
+              <div><strong>Total:</strong> ₦${data.order.total_price}</div>
             </div>
             <h3 class="font-semibold mb-2">Items</h3>
             <table class="min-w-full mb-4">
@@ -236,8 +407,8 @@
               <tr>
                 <td class="px-2 py-1 border-b">${item.name}</td>
                 <td class="px-2 py-1 border-b">${item.quantity}</td>
-                <td class="px-2 py-1 border-b">$${item.price}</td>
-                <td class="px-2 py-1 border-b">$${item.subtotal}</td>
+                <td class="px-2 py-1 border-b">₦${item.price}</td>
+                <td class="px-2 py-1 border-b">₦${item.subtotal}</td>
               </tr>
             `;
           });
@@ -257,5 +428,104 @@
   function closeOrderModal() {
     document.getElementById('orderModal').classList.add('hidden');
   }
-</script>
+// Function to switch tabs
+    function switchTab(tabName) {
+      const section = tabName + '-section';
+      
+      // Hide all sections
+      document.querySelectorAll('[id$="-section"]').forEach(sec => {
+        sec.classList.add('hidden');
+      });
+      
+      // Show selected section
+      const targetSection = document.getElementById(section);
+      if (targetSection) {
+        targetSection.classList.remove('hidden');
+      }
+      
+      // Update active link
+      document.querySelectorAll('.sidebar-link').forEach(l => {
+        l.classList.remove('text-amber-600', 'font-semibold');
+        l.classList.add('text-gray-600');
+      });
+      
+      const activeLink = document.querySelector(`.sidebar-link[data-section="${tabName}"]`);
+      if (activeLink) {
+        activeLink.classList.remove('text-gray-600');
+        activeLink.classList.add('text-amber-600', 'font-semibold');
+      }
+    }
+    
+    // Sidebar toggle
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const tabName = this.dataset.section;
+        
+        // Update URL with the new tab
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabName);
+        window.history.pushState({ tab: tabName }, '', url);
+        
+        // Switch to the selected tab
+        switchTab(tabName);
+      });
+    });
+    
+    // Function to get current tab from URL
+    function getCurrentTab() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('tab') || 'profile'; // Default to profile tab
+    }
+    
+    // Show section based on URL parameter on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const tab = getCurrentTab();
+      switchTab(tab);
+      
+      // Update pagination links to preserve tab state
+      document.querySelectorAll('a[href^="?"]').forEach(link => {
+        if (link.getAttribute('data-paginate') === 'true') return; // Skip already processed links
+        
+        const href = new URL(link.href);
+        const currentTab = getCurrentTab();
+        
+        // Only update if it's a pagination link and doesn't already have a tab parameter
+        if (href.searchParams.has('page') && !href.searchParams.has('tab')) {
+          href.searchParams.set('tab', currentTab);
+          link.href = href.toString();
+          link.setAttribute('data-paginate', 'true');
+        }
+      });
+    });
+    
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', function() {
+      const tab = getCurrentTab();
+      switchTab(tab);
+    });
+    
+    // Update pagination links after content loads
+    document.addEventListener('DOMContentLoaded', function() {
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'childList') {
+            document.querySelectorAll('a[href^="?"][data-paginate!="true"]').forEach(link => {
+              const href = new URL(link.href);
+              const currentTab = getCurrentTab();
+              
+              if (href.searchParams.has('page') && !href.searchParams.has('tab')) {
+                href.searchParams.set('tab', currentTab);
+                link.href = href.toString();
+                link.setAttribute('data-paginate', 'true');
+              }
+            });
+          }
+        });
+      });
+      
+      // Start observing the document with the configured parameters
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+  </script>
 {% endblock customJS %}

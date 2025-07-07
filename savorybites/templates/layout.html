@@ -18,6 +18,13 @@
             background-position: center;
             height: 90vh;
         }
+
+        .intro {
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 45vh;
+        }
         
         .menu-item:hover .menu-overlay {
             opacity: 1;
@@ -89,65 +96,13 @@
     </style>
 </head>
 <body class="font-sans text-gray-800">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg fixed w-full z-50">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center">
-                    <a href="{% url 'index' %}" class="text-2xl font-bold text-amber-800">Savory Bites</a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    {% block cart %} 
-                    <a href="{% url 'view_cart' %}" class="relative cursor-pointer mr-3">
-                        <span class="cursor-pointer bg-amber-600 text-white px-6 py-2 rounded hover:bg-amber-700 transition">
-                            <i class="fas fa-shopping-cart"></i>
-                        </span>
-                        <span id="cartCount" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                            {{ cart_count }}
-                        </span>
-                    </a>
-                    {% endblock cart %}
-                    <!-- User Dropdown -->
-                    <div class="relative">
-                        <button id="userDropdownBtn" type="button" class="flex items-center focus:outline-none">
-                            <i class="fas fa-user-circle text-2xl text-amber-700"></i>
-                            <svg class="w-4 h-4 ml-1 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                        <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-40 bg-white rounded shadow-lg py-2 z-50 border border-gray-100">
-                            {% if request.user.is_authenticated %}
-                            <a href="{% url 'profile' %}" class="block px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 {% if request.path == "/profile/" %} hidden {% endif %}">
-                                <i class="fas fa-user mr-2"></i> Profile
-                            </a>
-                            <form id="logoutForm" method="post" action="{% url 'logout' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700">
-                                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                                </button>  
-                            </form>
-                            {% else %}
-                            <form id="loginForm" method="post" action="{% url 'login' %}">
-                                {% csrf_token %}
-                               <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700">
-                                    <i class="fas fa-sign-in-alt mr-2"></i> Login
-                                </button>
-                            </form>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <!-- End User Dropdown -->
-                </div>
-            </div>
-        </div>
-    
-    </nav>
-    <!-- Endo of Navigation -->
-    
+    {% include "utilities/navigation.html" %}    
 
     <section class="py-20">
     {% block content %}
-        <div class="max-w-7xl mx-auto px-4">
+        {% include "utilities/intro.html" %}   
+
+        <div class="max-w-7xl mx-auto px-4 mt-10">
             <div class="text-center mb-16">
                 <h2 class="text-3xl font-bold mb-4 text-gray-800">Our Menu</h2>
                 <p class="max-w-2xl mx-auto text-gray-600">Carefully crafted dishes made with the finest ingredients</p>
@@ -176,6 +131,41 @@
         </div>
     {% endblock content %}
     </section>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg w-full mx-3 md:w-96">
+            <h2 class="text-2xl font-bold mb-6 text-center">Login to Continue</h2>
+            <form method="post" action="{% url 'login' %}" id="login-form">
+                {% csrf_token %}
+                <input type="hidden" name="login_source" value="modal">
+                <input type="hidden" name="next" value="/checkout/">
+                <div class="space-y-4">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                        <input type="text" name="username" id="username" required
+                            class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" name="password" id="password" required
+                            class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="remember" id="remember">
+                        <label for="remember" class="ml-2 text-sm text-gray-600">Remember me</label>
+                    </div>
+                    <div class="flex justify-between">
+                        <button type="submit" class="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">
+                            Login
+                        </button>
+                        <a href="{% url 'signup' %}" class="text-amber-600 hover:text-amber-700">Create Account</a>
+                    </div>
+                </div>
+                <div id="loginError" class="text-red-600 mt-2"></div>
+            </form>
+        </div>
+    </div>
 
     {% block footer %}
     {% include "utilities/footer.html" %}
@@ -210,6 +200,46 @@
             document.addEventListener('click', function() {
                 menu.classList.add('hidden');
             });
+
+
+            const loginModal = document.getElementById('loginModal');
+            const loginForm = document.getElementById('login-form');
+            document.getElementById('checkoutButton').addEventListener('click', function(e) {  
+                e.preventDefault();
+                if ("{{request.user.is_authenticated}}" === "True") {
+                        window.location.href = "/checkout/"; 
+                } else {
+                    loginModal.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                }
+            });
+            document.getElementById('loginModal').addEventListener('click', function(e) {
+                if (e.target.id === 'loginModal') {
+                    loginModal.classList.add('hidden');
+                    document.body.classList.remove('overflow-hidden');
+                }
+            });
+            
+            if (loginForm) {
+                loginForm.onsubmit = async function(e) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const formData = new FormData(form);
+                    const response = await fetch(form.action, {
+                        method: "POST",
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        document.getElementById('loginModal').classList.add('hidden');
+                        window.location.href = data.redirect_url;
+                    } else {
+                        document.getElementById('loginError').innerText = data.message;
+                    }
+                };
+            } 
+
         });
 
         // updating cart count

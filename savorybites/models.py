@@ -121,6 +121,9 @@ class Reservation(models.Model):
     reservation_date = models.DateField()
     reservation_time = models.TimeField()
     special_requests = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"Reservation by {self.customer_name} on {self.reservation_date}"
@@ -259,5 +262,7 @@ class Payment(models.Model):
     reference = models.CharField(max_length=100, unique=True, blank=True, null=True)
     
     def __str__(self):
+        if self.reference:
+            return f"Payment {self.reference} for Order {self.order.order_id}"
         return f"Payment for Order {self.order.order_id} of amount {self.amount}"
 

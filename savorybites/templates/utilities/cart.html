@@ -3,7 +3,7 @@
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow p-6">
-        <h1 class="text-3xl font-bold mb-6">Your Cart</h1>
+        <h1 class="text-3xl font-bold mb-6">My Cart</h1>
         
         <div id="cart-container">
             {% if cart_items %}
@@ -82,40 +82,7 @@
     </div>
 </div>
 
- <!-- Login Modal -->
-<div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg w-full mx-3 md:w-96">
-        <h2 class="text-2xl font-bold mb-6 text-center">Login to Continue</h2>
-        <form method="post" action="{% url 'login' %}" id="login-form">
-            {% csrf_token %}
-            <input type="hidden" name="login_source" value="modal">
-            <input type="hidden" name="next" value="/checkout/">
-            <div class="space-y-4">
-                <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                    <input type="text" name="username" id="username" required
-                        class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
-                </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" name="password" id="password" required
-                        class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
-                </div>
-                <div class="flex items-center">
-                    <input type="checkbox" name="remember" id="remember">
-                    <label for="remember" class="ml-2 text-sm text-gray-600">Remember me</label>
-                </div>
-                <div class="flex justify-between">
-                    <button type="submit" class="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">
-                        Login
-                    </button>
-                    <a href="{% url 'signup' %}" class="text-amber-600 hover:text-amber-700">Create Account</a>
-                </div>
-            </div>
-            <div id="loginError" class="text-red-600 mt-2"></div>
-        </form>
-    </div>
-</div>
+
 
 {% endblock %}
 
@@ -221,7 +188,10 @@
             const newQuantity = currentQuantity + change;
 
             // Don't allow quantity to go below 1
-            if (newQuantity < 1) return;
+            if (newQuantity < 1) {
+                notyf.error('Quantity cannot be less than 1');
+                return;
+            }
 
             try {
                 const response = await fetch(`/cart/update/${itemId}/`, {
@@ -239,6 +209,7 @@
                 const data = await response.json();
 
                 if (!response.ok) {
+                    notyf.error(data.message || 'Update failed');
                     throw new Error(data.message || 'Update failed');
                 }
 
@@ -258,9 +229,12 @@
                 // Update the cart totals
                 this.updateCartTotals(data.total, data.cart_count);
 
+                // Notify user of success
+                notyf.success('Quantity updated');
+
             } catch (error) {
                 console.error('Update error:', error);
-                alert(`Error: ${error.message}`);
+                notyf.error(error.message);
             }
         }
 
@@ -282,17 +256,22 @@
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
                     const errorText = await response.text();
+                    notyf.error(errorText.substring(0, 100));
                     throw new Error(`Server returned: ${errorText.substring(0, 100)}`);
                 }
 
                 const data = await response.json();
 
                 if (!response.ok) {
+                    notyf.error(data.message || 'Removal failed');
                     throw new Error(data.message || 'Removal failed');
                 }
 
                 cartItemElement.remove();
                 this.updateCartTotals(data.total, data.cart_count);
+                
+                // Show success notification
+                notyf.success('Item removed from cart');
                 
                 if (data.cart_count === 0) {
                     this.showEmptyCart();
@@ -304,7 +283,7 @@
                 
             } catch (error) {
                 console.error('Remove error:', error);
-                alert(`Error: ${error.message}`);
+                notyf.error(error.message);
             } finally {
                 if (button) button.disabled = false;
             }
@@ -325,6 +304,7 @@
                 const data = await response.json();
 
                 if (data.status !== 'success') {
+                    notyf.error(data.message || 'Clear failed');
                     throw new Error(data.message || 'Clear failed');
                 }
 
@@ -332,10 +312,10 @@
                 this.showEmptyCart();
                 this.updateCartTotals(0, 0);
                 
-                alert('Cart cleared successfully');
+                notyf.success('Cart cleared successfully');
             } catch (error) {
                 console.error('Error clearing cart:', error);
-                alert('Failed to clear cart: ' + error.message);
+                notyf.error('Failed to clear cart: ' + error.message);
             }
         }
 
@@ -360,43 +340,7 @@
 
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', () => {
-        const loginModal = document.getElementById('loginModal');
-        const loginForm = document.getElementById('login-form');
-        document.getElementById('checkoutButton').addEventListener('click', function(e) {  
-            e.preventDefault();
-            if ("{{request.user.is_authenticated}}" === "True") {
-                    window.location.href = "/checkout/"; 
-            } else {
-                loginModal.classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
-            }
-        });
-        document.getElementById('loginModal').addEventListener('click', function(e) {
-            if (e.target.id === 'loginModal') {
-                loginModal.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-            }
-        });
-        
-        if (loginForm) {
-            loginForm.onsubmit = async function(e) {
-                e.preventDefault();
-                const form = e.target;
-                const formData = new FormData(form);
-                const response = await fetch(form.action, {
-                    method: "POST",
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    body: formData
-                });
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('loginModal').classList.add('hidden');
-                    window.location.href = data.redirect_url;
-                } else {
-                    document.getElementById('loginError').innerText = data.message;
-                }
-            };
-        } 
+      
 
         try {
             new CartManager();
