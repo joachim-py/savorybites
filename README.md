@@ -44,7 +44,7 @@ savorybites/
 ### Installation
 1. **Clone the repository:**
    ```sh
-   git clone <repo-url>
+   git clone <https://github.com/joachim-py/savorybites.git>
    cd savorybites
    ```
 2. **Create and activate a virtual environment (recommended):**
