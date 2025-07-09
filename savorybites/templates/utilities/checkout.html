@@ -3,13 +3,19 @@
 {% block cart %} {% endblock cart %}
 
 {% block content %}
-<div class="max-w-7xl md:max-w-5xl mx-auto px-4 py-8">
+<div class="max-w-7xl md:max-w-5xl mx-auto px-4 pb-8 pt-20">
     <div class="bg-white rounded-lg shadow-md p-6 mt-6">
         <h1 class="text-3xl font-bold mb-6">Checkout</h1>
         {% if messages %}
             <div class="mb-4">
                 {% for message in messages %}
-                    <div class="text-red-600 text-sm">{{ message }}</div>
+                    {% if message.tags == 'error' %}
+                        <div class="text-red-600 text-sm">{{ message }}</div>
+                    {% elif message.tags == 'success' %}
+                        <div class="text-green-600 text-sm">{{ message }}</div>
+                    {% else %}
+                        <div class="text-gray-600 text-sm">{{ message }}</div>
+                    {% endif %}
                 {% endfor %}
             </div>
         {% endif %}

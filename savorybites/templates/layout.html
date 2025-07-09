@@ -13,17 +13,19 @@
     <style>
         /* Custom CSS */
         .hero {
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
             background-size: cover;
             background-position: center;
             height: 90vh;
         }
-
+        
         .intro {
-            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/static/img/{{ hero_image }}');
             background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             background-position: center;
-            height: 45vh;
+            height: 60vh;
         }
         
         .menu-item:hover .menu-overlay {
@@ -98,7 +100,7 @@
 <body class="font-sans text-gray-800">
     {% include "utilities/navigation.html" %}    
 
-    <section class="py-20">
+    <section class="pb-20">
     {% block content %}
         {% include "utilities/intro.html" %}   
 
@@ -172,6 +174,7 @@
     {% endblock footer %}
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script>
         // Creating Notify Instance

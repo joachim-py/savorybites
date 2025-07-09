@@ -2,7 +2,7 @@
 {% block title %} Place Order {% endblock title %}
 {% block cart %} {% endblock cart %}
 {% block content %}
-<div class="max-w-7xl md:max-w-3xl mx-auto px-4 py-8">
+<div class="max-w-7xl md:max-w-3xl mx-auto px-4 pb-8 pt-20">
     
     <div class="bg-white rounded-lg shadow-md p-6 mt-12">
         <h1 class="text-3xl font-bold mb-6">Place Order</h1>
@@ -13,21 +13,45 @@
                 <div>
                     <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
                     <div class="space-y-2">
-                        <div class="space-x-2">
+                        <!-- <div class="space-x-2">
                             <span class="text-gray-600 font-bold">Order:</span>
                             <span>#{{ order.order_id }}</span>
-                        </div>
+                        </div> -->
                         <div class="space-x-2">
                             <span class="text-gray-600 font-bold">Date:</span>
                             <span>{{ order.order_date }}</span>
                         </div>
                         <div class="space-x-2">
-                            <span class="text-gray-600 font-bold">Total Items:</span>
-                            <span>{{ order.cart_items.count }}</span>
+                            <span class="text-gray-600 font-bold">Total Items: </span>
+                            <span class="text-amber-600">{{ order.cart_items.count }}</span>
                         </div>
                         <div class="space-x-2">
-                            <span class="text-gray-600 font-bold">Total Amount:</span>
-                            <span id="total-amount">₦{{ order.total_price }}</span>
+                            <span class="text-gray-600 font-bold">Subtotal:</span>
+                            <span class="text-amber-600 font-bold">₦{{ order.total_price }}</span>
+                        </div>
+                        <div class="space-x-2">
+                            <span class="text-gray-600 font-bold">Delivery Option:</span>
+                            <span class="text-amber-600">
+                                {{ order.get_delivery_option_display }}
+                            </span>
+                        </div>
+                        <div class="space-x-2">
+                            <span class="text-gray-600 font-bold">Delivery Fee:</span>
+                            {% if order.delivery_option == 'delivery' %}
+                            <span class="text-amber-600">₦ 
+                                {% if order.total_price > 9000 and order.total_price < 450000 %}
+                                    2800.00
+                                {% else %}
+                                    1500.00
+                                {% endif %}
+                            </span>
+                            {% else %}
+                            <span class="text-green-600">Free</span>
+                            {% endif %}
+                        </div>
+                        <div class="space-x-2">
+                            <span class="text-gray-600 font-bold">Total:</span>
+                            <span class="text-amber-600 font-bold">₦{{ total_amount }}</span>
                         </div>
                     </div>
                 </div>

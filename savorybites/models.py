@@ -77,6 +77,7 @@ class Order(models.Model):
     ], default='dine_in')
     special_instructions = models.TextField(blank=True)
     cart_items = models.ManyToManyField(CartItem, related_name='orders')
+    delivery_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=[
         ('pending', 'Pending'),

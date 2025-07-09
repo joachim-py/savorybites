@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 py-8">
+<div class="max-w-5xl mx-auto px-4 pb-8 pt-20">
     <div class="bg-white rounded-lg shadow p-6">
         <h1 class="text-3xl font-bold mb-6">My Cart</h1>
         
@@ -239,7 +239,18 @@
         }
 
         async removeItem(itemId, cartItemElement) {
-            if (!confirm('Remove this item from cart?')) return;
+
+            const deleteItem = await Swal.fire({
+                title: 'Remove item',
+                text: 'Are you sure you want to remove this item from your cart?',
+                icon: 'none',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: '<i class="fa fa-trash"> </i> Yes, remove it',
+                cancelButtonText: 'Cancel'
+            });
+            if (!deleteItem.isConfirmed) return;
 
             const button = cartItemElement.querySelector('.remove-item');
             if (button) button.disabled = true;
@@ -290,7 +301,17 @@
         }
 
         async clearCart() {
-            if (!confirm('Are you sure you want to clear your entire cart?')) return;
+            const deleteCart = await Swal.fire({
+                title: `Clear cart items`,
+                text: 'Are you sure you want to clear your entire cart?',
+                icon: 'none',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: '<i class="fa fa-shopping-cart"> </i> Yes, clear it',
+                cancelButtonText: 'Cancel'
+            });
+            if (!deleteCart.isConfirmed) return;
 
             try {
                 const response = await fetch('/cart/clear/', {

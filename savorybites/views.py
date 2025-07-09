@@ -347,6 +347,11 @@ def checkout(request):
 @csrf_protect
 def payment(request, order_id):
     order = get_object_or_404(Order, id=order_id)
+    
+    if order.delivery_option == 'delivery':
+        total_amount = order.total_price + (2800 if order.total_price > 9000 and order.total_price < 450000 else 1500)
+    else:
+        total_amount = order.total_price
 
     if not request.user.is_authenticated:
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -371,7 +376,7 @@ def payment(request, order_id):
         if not email:
             return JsonResponse({'status': 'error', 'message': 'Customer email is required'})
 
-        amount = float(order.total_price)
+        amount = float(total_amount)
         amount_in_kobo = int(amount * 100)
 
         headers = {
@@ -400,7 +405,7 @@ def payment(request, order_id):
             if response.status_code == 200 and result['status']:
                 Payment.objects.create(
                     order=order,
-                    amount=order.total_price,
+                    amount=total_amount,
                     payment_method='card',
                     status='pending',
                     reference=result['data']['reference']
@@ -420,9 +425,11 @@ def payment(request, order_id):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
+    print(total_amount)
     return render(request, 'utilities/payment.html', {
         'order': order,
         'cart_count': cart_count,
+        'total_amount': total_amount,
         'PAYSTACK_PUBLIC_KEY': config('PAYSTACK_PUBLIC_KEY')
     })
 
@@ -494,6 +501,13 @@ def payment_callback(request):
                 
                 # Update order status
                 order = payment.order
+                
+                if order.delivery_option == 'delivery':
+                    total_amount = order.total_price + (2800 if order.total_price > 9000 and order.total_price < 450000 else 1500)
+                else:
+                    total_amount = order.total_price
+                
+                order.delivery_price = total_amount
                 order.payment_status = 'paid'
                 order.status = 'confirmed'
                 order.save()
@@ -614,6 +628,7 @@ def menu(request):
         'cart_count': cart_count,
         'title': 'Menu',
         'description': 'Explore our menu of delectable dishes.',
+        'hero_image': 'menu_banner.jpg'
     }
 
     return render(request, 'layout.html', context)
@@ -631,6 +646,7 @@ def contact_us(request):
     context = {
         'title': 'Contact Us',
         'description': 'Contact us for any inquiries or feedback.',
+        'hero_image': 'contact_banner.jpg'
     }
     return render(request, 'utilities/contact.html', context)
 
@@ -684,6 +700,7 @@ def reservations(request):
             'reservations': reservations,
             'title': 'Reservations',
             'description': 'Make your reservations here',
+            'hero_image': 'reservation_banner.jpg'
         })
     return redirect('login')
 
@@ -709,6 +726,7 @@ def gallery(request):
         'gallery': gallery_items,
         'title': 'Gallery',
         'description': 'Our Gallery',
+        'hero_image': 'gallery_banner.jpg'
     }
     return render(request, 'utilities/gallery.html', context)
 
