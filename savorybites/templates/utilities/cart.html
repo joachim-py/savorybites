@@ -91,7 +91,7 @@
     class CartManager {
         constructor() {
             this.cartContainer = document.getElementById('cart-container');
-            this.cartCountElement = document.getElementById('cart-count');
+            this.cartCountElement = document.getElementById('cartCount');
             
             if (!this.cartContainer) return;
             
@@ -172,7 +172,6 @@
             if (this.cartCountElement) {
                 if (cartCount > 0) {
                     this.cartCountElement.textContent = cartCount;
-                    this.cartCountElement.style.display = 'inline-block';
                 } else {
                     this.cartCountElement.style.display = 'none';
                 }
@@ -361,8 +360,6 @@
 
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', () => {
-      
-
         try {
             new CartManager();
         } catch (error) {
