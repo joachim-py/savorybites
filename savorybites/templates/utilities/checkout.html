@@ -6,9 +6,15 @@
 <div class="max-w-7xl md:max-w-5xl mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow-md p-6 mt-6">
         <h1 class="text-3xl font-bold mb-6">Checkout</h1>
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="text-red-600 text-sm">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
         <form method="POST" action="{% url 'checkout' %}" class="space-y-6" id="checkoutForm">
             {% csrf_token %}
-            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <!-- Shipping Information -->
                 <div class="order-2 md:order-1">
@@ -93,10 +99,9 @@
                 <!-- Submit Button -->
                 <div class="order-3"> 
                     <div class="mt-8">
-                        <button type="button" id="checkoutButton" class="w-full bg-amber-600 text-white py-3 px-6 rounded-lg hover:bg-amber-700 transition">
+                        <button type="submit" id="placeOrderButton" class="w-full bg-amber-600 text-white py-3 px-6 rounded-lg hover:bg-amber-700 transition">
                             Place Order
                         </button>
-
                     </div>
 
                 </div>
@@ -112,36 +117,65 @@
 
 {% block customJS %}
 <script>
-
-    // Function to handle checkout click
-    const form = document.getElementById('checkoutForm');
-    const deliveryOptions = document.getElementsByName('delivery_option');
-
-    for (const option of deliveryOptions) {
-        option.addEventListener("change", function() {
-            if (option.value === 'delivery') {
-                document.querySelector('.delivery_address').classList.remove('hidden');
-            }
-        })
-    }
-
-    document.getElementById('checkoutButton').addEventListener('click', function() {  
-        const selectedOption = document.querySelector('input[name="delivery_option"]:checked').value;
-        const deliveryAddress = document.querySelector('textarea[name="address"]');
-        const deliveryAddressError = document.querySelector('.addressError');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show/hide delivery address based on delivery option
+        const deliveryOptions = document.getElementsByName('delivery_option');
+        const deliveryAddressField = document.querySelector('.delivery_address');
         
-        if (selectedOption === "delivery" && !deliveryAddress.value.trim()) {
-            deliveryAddressError.classList.remove('hidden');
-            deliveryAddress.classList.add('border', 'border-red-600');
-        } else {
-            deliveryAddressError.classList.add('hidden');
-            deliveryAddress.classList.remove('border', 'border-red-600');
-            document.getElementById('checkoutForm').submit();
+        // Initialize delivery address visibility
+        function updateDeliveryAddressVisibility() {
+            const selectedOption = document.querySelector('input[name="delivery_option"]:checked');
+            if (selectedOption && selectedOption.value === 'delivery') {
+                deliveryAddressField.classList.remove('hidden');
+            } else {
+                deliveryAddressField.classList.add('hidden');
+            }
         }
-    }); 
-
-
-    
-
+        
+        // Set up event listeners for delivery options
+        deliveryOptions.forEach(option => {
+            option.addEventListener('change', updateDeliveryAddressVisibility);
+        });
+        
+        // Initialize on page load
+        updateDeliveryAddressVisibility();
+        
+        // Form submission
+        const form = document.getElementById('checkoutForm');
+        const placeOrderButton = document.getElementById('placeOrderButton');
+        
+        if (form && placeOrderButton) {
+            form.addEventListener('submit', function(e) {
+                // Don't prevent default - let the form submit normally
+                const selectedOption = document.querySelector('input[name="delivery_option"]:checked');
+                const deliveryAddress = document.querySelector('textarea[name="address"]');
+                const deliveryAddressError = document.querySelector('.addressError');
+                
+                // Reset error states
+                if (deliveryAddressError) deliveryAddressError.classList.add('hidden');
+                if (deliveryAddress) deliveryAddress.classList.remove('border-red-600');
+                
+                // Validate delivery address if delivery is selected
+                if (selectedOption && selectedOption.value === 'delivery') {
+                    if (!deliveryAddress || !deliveryAddress.value.trim()) {
+                        e.preventDefault();
+                        if (deliveryAddressError) deliveryAddressError.classList.remove('hidden');
+                        if (deliveryAddress) deliveryAddress.classList.add('border', 'border-red-600');
+                        return false;
+                    }
+                }
+                
+                // Show loading state
+                placeOrderButton.disabled = true;
+                const originalButtonText = placeOrderButton.innerHTML;
+                placeOrderButton.innerHTML = 'Processing...';
+                
+                // The form will submit normally after validation
+                return true;
+            });
+        } else {
+            console.error('Checkout form or button not found');
+        }
+    });
 </script>
 {% endblock customJS %}

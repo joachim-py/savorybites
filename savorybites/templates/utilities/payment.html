@@ -56,7 +56,97 @@
 
 
 {% block customJS %}
+
+// Replace your current script with this debug version
 <script>
+    console.log("Payment script loaded");
+    
+    const paymentButton = document.getElementById('payment-button');
+    const paymentForm = document.getElementById('paymentForm');
+
+    console.log("Payment button:", paymentButton);
+    console.log("Payment form:", paymentForm);
+
+    // Prevent default form submit
+    paymentForm.addEventListener('submit', function(e) {
+        console.log("Form submit prevented");
+        e.preventDefault();
+    });
+
+    paymentButton.addEventListener('click', function(e) {
+        console.log("Payment button clicked");
+        e.preventDefault();
+
+        paymentButton.disabled = true;
+        paymentButton.innerHTML = `<svg class="inline w-5 h-5 mr-2 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg> Processing...`;
+
+        const customerEmail = document.getElementsByName('customer_email')[0].value;
+        console.log("Customer email:", customerEmail);
+        console.log("Form action:", paymentForm.action);
+
+        // Check if jQuery is loaded
+        if (typeof $ === 'undefined') {
+            console.error("jQuery is not loaded!");
+            alert("jQuery is not loaded. Please check your template.");
+            return;
+        }
+
+        $.ajaxSetup({
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        console.log("Making AJAX request...");
+        
+        $.ajax({
+            url: paymentForm.action,
+            type: "POST",
+            data: {
+                "customer_email": customerEmail
+            },
+            success: function(response) {
+                console.log("AJAX Success:", response);
+                if (response.status === 'success') {
+                    console.log("Redirecting to:", response.authorization_url);
+                    if (typeof notyf !== 'undefined') {
+                        notyf.success("Redirecting to Paystack for payment...");
+                    }
+                    window.location.href = response.authorization_url;
+                } else {
+                    console.error("Response error:", response);
+                    if (typeof notyf !== 'undefined') {
+                        notyf.error(response.message || "Payment initialization failed.");
+                    } else {
+                        alert(response.message || "Payment initialization failed.");
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", {
+                    status: status,
+                    error: error,
+                    responseText: xhr.responseText,
+                    statusCode: xhr.status
+                });
+                
+                if (typeof notyf !== 'undefined') {
+                    notyf.error("An error occurred: " + error);
+                } else {
+                    alert("An error occurred: " + error);
+                }
+            },
+            complete: function() {
+                console.log("AJAX Complete");
+                paymentButton.disabled = false;
+                paymentButton.innerHTML = "Proceed to Payment";
+            }
+        });
+    });
+</script>
+
+<!-- <script>
     const paymentButton = document.getElementById('payment-button');
     const paymentForm = document.getElementById('paymentForm');
 
@@ -105,6 +195,6 @@
             }
         });
     });
-</script>
+</script> -->
 
 {% endblock customJS %}

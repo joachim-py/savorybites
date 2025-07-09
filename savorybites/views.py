@@ -259,50 +259,83 @@ def view_cart(request):
 
 @login_required
 def checkout(request):
-    if request.user.is_authenticated:
-        cart_items = CartItem.objects.filter(user=request.user)
-    else:
-        session_key = request.session.session_key
-        if not session_key:
-            request.session.save()
-            session_key = request.session.session_key
-
-        cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
-
-    if not cart_items.exists():
-        messages.error(request, 'Your cart is empty.')
-        return redirect('menu')
-
-    cart_count = cart_items.count()
-    total = sum(item.menu_item.price * item.quantity for item in cart_items)
-
-    if request.method == 'POST':
-        # Create order
-        order = Order.objects.create(
-            customer_name=request.POST.get('full_name'),
-            customer_email=request.POST.get('email'),
-            customer_phone=request.POST.get('phone'),
-            customer_address=request.POST.get('address'),
-            delivery_option=request.POST.get('delivery_option'),
-            special_instructions=request.POST.get('notes', ''),
-            total_price=total,
-            status='pending',
-            payment_status='pending'
-        )
-
-        # Set cart items for the order
-        order.cart_items.set(cart_items)
-
-        # Optional: Assign user to the order if logged in
+    try:
+        # Get cart items
         if request.user.is_authenticated:
-            order.user = request.user
-            order.save()
+            cart_items = CartItem.objects.filter(user=request.user)
+        else:
+            session_key = request.session.session_key
+            if not session_key:
+                request.session.save()
+                session_key = request.session.session_key
+            cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
 
-        # Clear cart
-        # cart_items.delete()
+        if not cart_items.exists():
+            messages.error(request, 'Your cart is empty.')
+            return redirect('menu')
 
-        messages.success(request, 'Order created successfully! Please proceed to payment.')
-        return redirect('payment', order_id=order.id)
+        cart_count = cart_items.count()
+        total = sum(item.menu_item.price * item.quantity for item in cart_items) 
+
+        print('GET CART ITEMS:', cart_items)
+        
+        if request.method == 'POST':
+            try:
+                # Validate required fields
+                required_fields = {
+                    'full_name': 'Full name',
+                    'email': 'Email address',
+                    'phone': 'Phone number',
+                    'delivery_option': 'Delivery option'
+                }
+                
+                errors = []
+                for field, name in required_fields.items():
+                    if not request.POST.get(field):
+                        errors.append(f"{name} is required")
+                
+                # Additional validation for delivery address if delivery is selected
+                if request.POST.get('delivery_option') == 'delivery' and not request.POST.get('address'):
+                    errors.append("Delivery address is required when selecting delivery option")
+                
+                if errors:
+                    for error in errors:
+                        messages.error(request, error)
+                    return redirect('checkout')
+
+                try:
+                    # Create order
+                    order = Order.objects.create(
+                        customer_name=request.POST.get('full_name').strip(),
+                        customer_email=request.POST.get('email').strip(),
+                        customer_phone=request.POST.get('phone').strip(),
+                        customer_address=request.POST.get('address', '').strip(),
+                        delivery_option=request.POST.get('delivery_option'),
+                        special_instructions=request.POST.get('notes', '').strip(),
+                        total_price=total,
+                        status='pending',
+                        payment_status='pending',
+                        user=request.user if request.user.is_authenticated else None
+                    )
+
+                    # Add cart items to order
+                    order.cart_items.set(cart_items)
+                    
+                    # Clear the cart after successful order
+                    # cart_items.delete()
+                    
+                    messages.success(request, 'Order created successfully! Please proceed to payment.')
+                    return redirect('payment', order_id=order.id)
+                    
+                except Exception as e:
+                    messages.error(request, f'Error creating order: {str(e)}')
+                    return redirect('checkout')
+            except Exception as e:
+                messages.error(request, f'An error occurred: {str(e)}')
+                return redirect('checkout')
+    except Exception as e:
+        messages.error(request, f'Error creating order: {str(e)}')
+        return redirect('checkout')
 
     return render(request, 'utilities/checkout.html', {
         'cart_items': cart_items,
@@ -393,8 +426,52 @@ def payment(request, order_id):
         'PAYSTACK_PUBLIC_KEY': config('PAYSTACK_PUBLIC_KEY')
     })
 
+# def payment_callback(request):
+#     # Get reference from Paystack
+#     reference = request.GET.get('reference')
+    
+#     if reference:
+#         try:
+#             # Verify payment
+#             headers = {
+#                 'Authorization': f'Bearer {config("PAYSTACK_SECRET_KEY")}',
+#                 'Content-Type': 'application/json',
+#             }
+#             response = requests.get(f'https://api.paystack.co/transaction/verify/{reference}', headers=headers)
+#             response = response.json()
+            
+#             if response['status'] and response['data']['status'] == 'success':
+#                 # Update payment status
+#                 payment_method = response['data'].get('channel', 'card')
+#                 payment = Payment.objects.get(reference=reference)
+#                 payment.status = 'completed'
+#                 payment.payment_method=payment_method
+#                 payment.save()
+                
+#                 # Update order status
+#                 order = payment.order
+#                 order.payment_status = 'paid'
+#                 order.status = 'confirmed'
+#                 order.save()
+                
+#                 # Create Order Delivery
+#                 Delivery.objects.create(
+#                     order=order,
+#                     delivery_date=datetime.now().date(),
+#                 )
+                
+#                 # Send success message
+#                 messages.success(request, 'Payment successful! Your order has been confirmed.')
+#                 return redirect('profile')
+#             else:
+#                 messages.error(request, 'Payment verification failed')
+#                 return redirect('payment', order_id=order.id)
+                
+#         except Exception as e:
+#             messages.error(request, f'Payment verification failed: {str(e)}')
+#             return redirect('payment', order_id=order.id)
+
 def payment_callback(request):
-    # Get reference from Paystack
     reference = request.GET.get('reference')
     
     if reference:
@@ -412,7 +489,7 @@ def payment_callback(request):
                 payment_method = response['data'].get('channel', 'card')
                 payment = Payment.objects.get(reference=reference)
                 payment.status = 'completed'
-                payment.payment_method=payment_method
+                payment.payment_method = payment_method
                 payment.save()
                 
                 # Update order status
@@ -421,22 +498,31 @@ def payment_callback(request):
                 order.status = 'confirmed'
                 order.save()
                 
+                # Clear cart AFTER successful payment
+                if order.user:
+                    CartItem.objects.filter(user=order.user).delete()
+                
                 # Create Order Delivery
                 Delivery.objects.create(
                     order=order,
                     delivery_date=datetime.now().date(),
                 )
                 
-                # Send success message
                 messages.success(request, 'Payment successful! Your order has been confirmed.')
                 return redirect('profile')
             else:
                 messages.error(request, 'Payment verification failed')
-                return redirect('payment', order_id=order.id)
+                return redirect('payment', order_id=payment.order.id)
                 
+        except Payment.DoesNotExist:
+            messages.error(request, 'Payment record not found')
+            return redirect('menu')
         except Exception as e:
             messages.error(request, f'Payment verification failed: {str(e)}')
-            return redirect('payment', order_id=order.id)
+            return redirect('menu')
+    
+    messages.error(request, 'Invalid payment reference')
+    return redirect('menu')
 
 @login_required
 def orders(request):

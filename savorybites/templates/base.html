@@ -132,14 +132,6 @@
         // Creating Notify Instance
         const notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'bottom' } });
 
-        // Mobile Menu Toggle
-        const menuBtn = document.getElementById('menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        menuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-
         // Function to update cart count
         function updateCartCount(count) {
             const cartCount = document.getElementById('cartCount');
@@ -152,8 +144,7 @@
                 cartCount.classList.add('hidden');
             }
         }
-        
-        
+                
         // Menu Category Filter
         const categoryBtns = document.querySelectorAll('.menu-category-btn');
         const menuItems = document.querySelectorAll('.menu-item');
@@ -221,11 +212,8 @@
                 }
             });
         });
-        
-        // Set minimum date for reservation to today
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('date').setAttribute('min', today);
 
+        
         document.addEventListener('DOMContentLoaded', function() {
             const btn = document.getElementById('userDropdownBtn');
             const menu = document.getElementById('userDropdownMenu');
@@ -238,9 +226,9 @@
             });
         });
 
+
         // updating cart count
         updateCartCount({{ cart_count }});
-
 
     </script>
     {% block customJS %} {% endblock customJS %}
