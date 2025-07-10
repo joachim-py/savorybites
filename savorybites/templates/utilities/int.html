@@ -1,28 +1,5 @@
 {% extends "layout.html" %}
-{% block customCSS %} 
-<style>
-  .receipt-content {
-    font-family: 'Courier New', monospace !important;
-    line-height: 1.3;
-  }
 
-  .receipt-content table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .receipt-content td, .receipt-content th {
-    padding: 2px;
-    font-size: 10px;
-    border-bottom: 1px solid #ddd;
-  }
-
-  .receipt-content .dashed-line {
-    border-bottom: 1px dashed #000;
-    margin: 5px 0;
-  }
-</style>
-{% endblock %}
 {% block title %}Profile Dashboard{% endblock title %}
 
 {% block content %}
@@ -393,230 +370,70 @@
 {% endblock %}
 
 {% block customJS %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-  // Global function to handle receipt printing
-  function printReceiptToPDF(paperSize = '80mm') {
-    try {
-      // 1. Get original receipt element
-      const originalReceipt = document.getElementById('receipt-content');
-      if (!originalReceipt) {
-        alert('Receipt content not found!');
-        return;
-      }
+// Global function to handle receipt printing
+function printReceiptToPDF() {
+  // Get the receipt content element
+  const receiptContent = document.getElementById('receipt-content');
+  if (!receiptContent) {
+    console.error('Receipt content not found');
+    return;
+  }
+
+  // Create a clone of the receipt content
+  const receiptClone = receiptContent.cloneNode(true);
   
-      // 2. Create a deep clone with all styles
-      const receiptClone = originalReceipt.cloneNode(true);
-      
-      // 3. Apply critical inline styles to ensure visibility
-      receiptClone.style.visibility = 'visible';
-      receiptClone.style.opacity = '1';
-      receiptClone.style.position = 'relative';
-      receiptClone.style.zIndex = '9999';
-      receiptClone.style.backgroundColor = 'white';
-      receiptClone.style.color = 'black';
-      receiptClone.style.fontFamily = 'Courier New, monospace';
-      receiptClone.style.fontSize = paperSize === '58mm' ? '8px' : '10px';
-      receiptClone.style.padding = '5mm';
-      receiptClone.style.width = paperSize;
+  // Create a container for the PDF content
+  const container = document.createElement('div');
+  container.style.width = '200mm'; // Standard receipt width
+  container.style.margin = '0 auto';
+  container.style.padding = '10px';
+  container.style.fontFamily = 'monospace';
+  container.style.fontSize = '12px';
+  container.style.lineHeight = '1.2';
   
-      // 4. Create a temporary container
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'fixed';
-      tempContainer.style.left = '0';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '100%';
-      tempContainer.style.height = '100%';
-      tempContainer.style.overflow = 'hidden';
-      tempContainer.style.zIndex = '-1000';
-      tempContainer.appendChild(receiptClone);
-      document.body.appendChild(tempContainer);
+  // Add the cloned receipt content to the container
+  container.appendChild(receiptClone);
   
-      // 5. PDF Options
-      const options = {
-        margin: 0,
-        filename: `receipt_${Date.now()}.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { 
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          scrollX: 0,
-          scrollY: 0,
-          width: receiptClone.offsetWidth,
-          height: receiptClone.scrollHeight
-        },
-        jsPDF: { 
-          unit: 'mm',
-          format: [paperSize === '58mm' ? 58 : 80, 297], // A4 height for dynamic content
-          orientation: 'portrait'
-        }
-      };
+  // Create a new div to hold everything for PDF generation
+  const element = document.createElement('div');
+  element.appendChild(container);
   
-      // 6. Generate PDF
-      html2pdf()
-        .set(options)
-        .from(receiptClone)
-        .save()
-        .then(() => {
-          document.body.removeChild(tempContainer);
-          console.log('PDF generated successfully');
-        });
-  
-    } catch (error) {
-      console.error('PDF Error:', error);
-      alert('PDF generation failed. Check console for details.');
+  // PDF options
+  const opt = {
+    margin: 0,
+    filename: `receipt-${new Date().toISOString().split('T')[0]}.pdf`,
+    image: { type: 'jpeg', quality: 1 },
+    html2canvas: { 
+      scale: 2,
+      logging: true,
+      useCORS: true,
+      windowWidth: 300,
+      width: 300
+    },
+    jsPDF: { 
+      unit: 'mm', 
+      format: [200, 297], // Standard receipt size (80mm width, A4 height)
+      orientation: 'portrait'
     }
+  };
+  
+  try {
+    // Generate and download the PDF
+    html2pdf()
+      .set(opt)
+      .from(element)
+      .toPdf()
+      .get('pdf')
+      .then(function(pdf) {
+        // No need to adjust margins since we're using a fixed width
+      })
+      .save();
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    alert('Failed to generate PDF. Please try again.');
   }
-
-  // Enhanced function to apply receipt-specific styles
-  function applyReceiptStyles(element, fontSize) {
-    // Set base font size
-    const baseFontSize = parseInt(fontSize);
-    
-    // Header styles
-    const headers = element.querySelectorAll('h1, h2, h3, .receipt-title');
-    headers.forEach(header => {
-      header.style.textAlign = 'center';
-      header.style.fontWeight = 'bold';
-      header.style.marginBottom = '3px';
-      header.style.fontSize = (baseFontSize + 2) + 'px';
-      header.style.lineHeight = '1.2';
-    });
-    
-    // Info text styles
-    const infoText = element.querySelectorAll('.text-xs, .text-sm, small');
-    infoText.forEach(text => {
-      text.style.fontSize = (baseFontSize - 1) + 'px';
-      text.style.marginBottom = '1px';
-      text.style.lineHeight = '1.3';
-    });
-    
-    // Table styles
-    const tables = element.querySelectorAll('table');
-    tables.forEach(table => {
-      table.style.width = '100%';
-      table.style.borderCollapse = 'collapse';
-      table.style.marginBottom = '3px';
-      table.style.fontSize = fontSize;
-    });
-    
-    // Table cell styles
-    const cells = element.querySelectorAll('td, th');
-    cells.forEach(cell => {
-      cell.style.padding = '1px 2px';
-      cell.style.fontSize = fontSize;
-      cell.style.borderBottom = '1px solid #ccc';
-      cell.style.lineHeight = '1.3';
-    });
-    
-    // Table header styles
-    const headerCells = element.querySelectorAll('th');
-    headerCells.forEach(cell => {
-      cell.style.fontWeight = 'bold';
-      cell.style.borderBottom = '1px solid #000';
-    });
-    
-    // Dashed line styles
-    const dividers = element.querySelectorAll('.border-dashed, .border-b, [class*="border-dashed"]');
-    dividers.forEach(div => {
-      div.style.borderBottom = '1px dashed #000';
-      div.style.margin = '3px 0';
-      div.style.height = '1px';
-    });
-    
-    // Total amount styling
-    const totals = element.querySelectorAll('.font-bold, .text-lg, [class*="font-bold"]');
-    totals.forEach(total => {
-      total.style.fontWeight = 'bold';
-      total.style.fontSize = (baseFontSize + 1) + 'px';
-      total.style.borderTop = '1px solid #000';
-      total.style.paddingTop = '2px';
-      total.style.marginTop = '3px';
-    });
-    
-    // Center alignment for specific elements
-    const centerElements = element.querySelectorAll('.text-center, [class*="text-center"]');
-    centerElements.forEach(el => {
-      el.style.textAlign = 'center';
-    });
-    
-    // Right alignment for prices
-    const rightElements = element.querySelectorAll('.text-right, [class*="text-right"]');
-    rightElements.forEach(el => {
-      el.style.textAlign = 'right';
-    });
-    
-    // Remove any box shadows, borders that might interfere
-    const allElements = element.querySelectorAll('*');
-    allElements.forEach(el => {
-      el.style.boxShadow = 'none';
-      el.style.textShadow = 'none';
-      // Ensure visibility
-      if (el.style.display === 'none') {
-        el.style.display = 'block';
-      }
-    });
-  }
-
-  // Enhanced function with better error handling and user feedback
-  function printReceiptToPDFWithSize() {
-    // Check if receipt content exists
-    const receiptContent = document.getElementById('receipt-content');
-    if (!receiptContent) {
-      alert('Please open an order first to print its receipt.');
-      return;
-    }
-    
-    // Create a modal to select paper size
-    const modal = document.createElement('div');
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '9999';
-    
-    modal.innerHTML = `
-      <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 300px;">
-        <h3 style="margin-top: 0; color: #333; text-align: center;">Select Receipt Paper Size</h3>
-        <div style="margin: 15px 0;">
-          <button onclick="printReceiptToPDF('58mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
-                  style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-            58mm (2.28") - Mobile Printer
-          </button>
-          <button onclick="printReceiptToPDF('80mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
-                  style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-            80mm (3.15") - Standard Receipt
-          </button>
-          <button onclick="printReceiptToPDF('112mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
-                  style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-            112mm (4.41") - Wide Format
-          </button>
-        </div>
-        <button onclick="document.body.removeChild(this.closest('.modal-overlay'))" 
-                style="width: 100%; padding: 8px; background: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-          Cancel
-        </button>
-      </div>
-    `;
-    
-    modal.className = 'modal-overlay';
-    document.body.appendChild(modal);
-    
-    // Close modal when clicking outside
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        document.body.removeChild(modal);
-      }
-    });
-  }
-
-  // Function to show order details in a modal
+}
   function showOrderModal(event, orderId) {
     event.preventDefault();
     const modal = document.getElementById('orderModal');
@@ -680,7 +497,7 @@
               </div>
             </div>
             <div class="flex justify-end mt-4">
-              <button onclick="printReceiptToPDFWithSize()" class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition font-semibold text-xs">
+              <button onclick="printReceiptToPDF()" class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition font-semibold text-xs">
                 Print Receipt
               </button>
             </div>

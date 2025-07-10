@@ -1,7 +1,7 @@
 from django.contrib import admin
 from savorybites.models import (
     Menu, Contact, Gallery, Reservation, Review,
-    CartItem, Order, Payment, Profile, Special, Delivery
+    CartItem, Order, OrderItem, Payment, Profile, Special, Delivery
 )
 
 # Menu Admin
@@ -70,6 +70,15 @@ class OrderAdmin(admin.ModelAdmin):
         if 'cart_items' in form.changed_data:
             obj.calculate_total()
         super().save_model(request, obj, form, change)
+
+# OrderItem Admin
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ('order', 'menu_item_name', 'menu_item_price', 'quantity', 'subtotal')
+    list_filter = ('order',)
+    search_fields = ('order__order_id', 'menu_item_name')
+    ordering = ('order', 'menu_item_name')
+    list_per_page = 20
 
 # Payment Admin
 @admin.register(Payment)

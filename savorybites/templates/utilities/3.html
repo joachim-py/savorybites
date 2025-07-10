@@ -398,74 +398,139 @@
   // Global function to handle receipt printing
   function printReceiptToPDF(paperSize = '80mm') {
     try {
-      // 1. Get original receipt element
-      const originalReceipt = document.getElementById('receipt-content');
-      if (!originalReceipt) {
-        alert('Receipt content not found!');
+      // Get the receipt content element
+      const receiptContent = document.getElementById('receipt-content');
+      if (!receiptContent) {
+        console.error('Receipt content not found');
+        alert('Receipt content not found. Please make sure the order details are loaded.');
         return;
       }
-  
-      // 2. Create a deep clone with all styles
-      const receiptClone = originalReceipt.cloneNode(true);
+
+      // Create a clone of the receipt content
+      const receiptClone = receiptContent.cloneNode(true);
       
-      // 3. Apply critical inline styles to ensure visibility
+      // Set paper dimensions
+      let widthMM, heightMM, fontSize;
+      switch(paperSize) {
+        case '58mm':
+          widthMM = 58;
+          heightMM = 200;
+          fontSize = '8px';
+          break;
+        case '80mm':
+          widthMM = 80;
+          heightMM = 250;
+          fontSize = '10px';
+          break;
+        case '112mm':
+          widthMM = 112;
+          heightMM = 300;
+          fontSize = '12px';
+          break;
+        default:
+          widthMM = 80;
+          heightMM = 250;
+          fontSize = '10px';
+      }
+      
+      // Create temporary container that's visible but off-screen
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = widthMM + 'mm';
+      tempContainer.style.background = 'white';
+      tempContainer.style.padding = '5mm';
+      tempContainer.style.margin = '0';
+      tempContainer.style.fontFamily = 'Courier New, monospace';
+      tempContainer.style.fontSize = fontSize;
+      tempContainer.style.lineHeight = '1.4';
+      tempContainer.style.color = '#000';
+      tempContainer.style.visibility = 'visible';
+      tempContainer.style.opacity = '1';
+      tempContainer.style.display = 'block';
+      
+      // Style the cloned receipt content
+      receiptClone.style.width = '100%';
+      receiptClone.style.maxWidth = 'none';
+      receiptClone.style.padding = '0';
+      receiptClone.style.margin = '0';
+      receiptClone.style.fontFamily = 'inherit';
+      receiptClone.style.fontSize = 'inherit';
+      receiptClone.style.lineHeight = 'inherit';
+      receiptClone.style.color = '#000';
+      receiptClone.style.backgroundColor = 'white';
+      receiptClone.style.boxSizing = 'border-box';
       receiptClone.style.visibility = 'visible';
       receiptClone.style.opacity = '1';
-      receiptClone.style.position = 'relative';
-      receiptClone.style.zIndex = '9999';
-      receiptClone.style.backgroundColor = 'white';
-      receiptClone.style.color = 'black';
-      receiptClone.style.fontFamily = 'Courier New, monospace';
-      receiptClone.style.fontSize = paperSize === '58mm' ? '8px' : '10px';
-      receiptClone.style.padding = '5mm';
-      receiptClone.style.width = paperSize;
-  
-      // 4. Create a temporary container
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'fixed';
-      tempContainer.style.left = '0';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '100%';
-      tempContainer.style.height = '100%';
-      tempContainer.style.overflow = 'hidden';
-      tempContainer.style.zIndex = '-1000';
+      receiptClone.style.display = 'block';
+      
+      // Apply receipt-specific styles
+      applyReceiptStyles(receiptClone, fontSize);
+      
+      // Add the styled content to the temporary container
       tempContainer.appendChild(receiptClone);
+      
+      // Add to document body
       document.body.appendChild(tempContainer);
-  
-      // 5. PDF Options
-      const options = {
-        margin: 0,
-        filename: `receipt_${Date.now()}.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { 
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          scrollX: 0,
-          scrollY: 0,
-          width: receiptClone.offsetWidth,
-          height: receiptClone.scrollHeight
-        },
-        jsPDF: { 
-          unit: 'mm',
-          format: [paperSize === '58mm' ? 58 : 80, 297], // A4 height for dynamic content
-          orientation: 'portrait'
-        }
-      };
-  
-      // 6. Generate PDF
-      html2pdf()
-        .set(options)
-        .from(receiptClone)
-        .save()
-        .then(() => {
-          document.body.removeChild(tempContainer);
-          console.log('PDF generated successfully');
-        });
-  
+      
+      // Wait a moment for the content to render
+      setTimeout(() => {
+        // PDF options optimized for receipt paper
+        const options = {
+          margin: [2, 2, 2, 2], // Small margins in mm
+          filename: `receipt-${paperSize}-${new Date().toISOString().split('T')[0]}.pdf`,
+          image: { 
+            type: 'jpeg', 
+            quality: 0.98 
+          },
+          html2canvas: { 
+            scale: 2, // Good balance between quality and file size
+            logging: false,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            width: tempContainer.offsetWidth,
+            height: tempContainer.offsetHeight,
+            scrollX: 0,
+            scrollY: 0,
+            foreignObjectRendering: true
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: [widthMM, heightMM],
+            orientation: 'portrait',
+            compress: true,
+            precision: 2
+          }
+        };
+        
+        // Generate and download the PDF
+        html2pdf()
+          .set(options)
+          .from(tempContainer)
+          .save()
+          .then(function() {
+            console.log(`PDF generated successfully: ${paperSize} (${widthMM}mm x ${heightMM}mm)`);
+            // Clean up the temporary element
+            if (document.body.contains(tempContainer)) {
+              document.body.removeChild(tempContainer);
+            }
+          })
+          .catch(function(error) {
+            console.error('Error generating PDF:', error);
+            alert('Failed to generate PDF. Please try again.');
+            
+            // Clean up in case of error
+            if (document.body.contains(tempContainer)) {
+              document.body.removeChild(tempContainer);
+            }
+          });
+      }, 100); // Small delay to ensure content is rendered
+          
     } catch (error) {
-      console.error('PDF Error:', error);
-      alert('PDF generation failed. Check console for details.');
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
     }
   }
 

@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_protect, csrf_exempt 
-from savorybites.models import (CartItem, Contact, Delivery, Gallery, Menu, Order,
+from savorybites.models import (CartItem, Contact, Delivery, Gallery, Menu, Order, OrderItem,
                                 Payment, Profile, Reservation, Review, Special)
 
     
@@ -321,8 +321,14 @@ def checkout(request):
                     # Add cart items to order
                     order.cart_items.set(cart_items)
                     
-                    # Clear the cart after successful order
-                    # cart_items.delete()
+                    for cart_item in cart_items:
+                        OrderItem.objects.create(
+                            order=order,
+                            menu_item_name=cart_item.menu_item.name,
+                            menu_item_price=cart_item.menu_item.price,
+                            quantity=cart_item.quantity,
+                            subtotal=cart_item.menu_item.price * cart_item.quantity,
+                        )
                     
                     messages.success(request, 'Order created successfully! Please proceed to payment.')
                     return redirect('payment', order_id=order.id)
@@ -433,51 +439,6 @@ def payment(request, order_id):
         'PAYSTACK_PUBLIC_KEY': config('PAYSTACK_PUBLIC_KEY')
     })
 
-# def payment_callback(request):
-#     # Get reference from Paystack
-#     reference = request.GET.get('reference')
-    
-#     if reference:
-#         try:
-#             # Verify payment
-#             headers = {
-#                 'Authorization': f'Bearer {config("PAYSTACK_SECRET_KEY")}',
-#                 'Content-Type': 'application/json',
-#             }
-#             response = requests.get(f'https://api.paystack.co/transaction/verify/{reference}', headers=headers)
-#             response = response.json()
-            
-#             if response['status'] and response['data']['status'] == 'success':
-#                 # Update payment status
-#                 payment_method = response['data'].get('channel', 'card')
-#                 payment = Payment.objects.get(reference=reference)
-#                 payment.status = 'completed'
-#                 payment.payment_method=payment_method
-#                 payment.save()
-                
-#                 # Update order status
-#                 order = payment.order
-#                 order.payment_status = 'paid'
-#                 order.status = 'confirmed'
-#                 order.save()
-                
-#                 # Create Order Delivery
-#                 Delivery.objects.create(
-#                     order=order,
-#                     delivery_date=datetime.now().date(),
-#                 )
-                
-#                 # Send success message
-#                 messages.success(request, 'Payment successful! Your order has been confirmed.')
-#                 return redirect('profile')
-#             else:
-#                 messages.error(request, 'Payment verification failed')
-#                 return redirect('payment', order_id=order.id)
-                
-#         except Exception as e:
-#             messages.error(request, f'Payment verification failed: {str(e)}')
-#             return redirect('payment', order_id=order.id)
-
 def payment_callback(request):
     reference = request.GET.get('reference')
     
@@ -578,16 +539,17 @@ def order_details_json(request, order_id):
                 return JsonResponse({'status': 'error', 'message': 'Unauthorized access'}, status=403)
 
         items = [{
-            'name': item.menu_item.name,
+            'name': item.menu_item_name,
             'quantity': item.quantity,
-            'price': float(item.menu_item.price),
-            'subtotal': float(item.menu_item.price * item.quantity)
-        } for item in order.cart_items.all()]
+            'price': float(item.menu_item_price),
+            'subtotal': float(item.menu_item_price * item.quantity)
+        } for item in order.order_items.all()]
 
         return JsonResponse({
             'status': 'success',
             'order': {
                 'id': order.id,
+                'order_id': order.order_id,
                 'order_date': order.order_date.strftime('%Y-%m-%d'),
                 'status': order.status,
                 'payment_status': order.payment_status,

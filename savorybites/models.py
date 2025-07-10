@@ -104,6 +104,19 @@ class Order(models.Model):
         self.total_price = sum(item.menu_item.price * item.quantity for item in self.cart_items.all())
         self.save()
 
+class OrderItem(models.Model):
+    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items')
+    menu_item_name = models.CharField(max_length=100)
+    menu_item_price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=1)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.menu_item_name}"
+
+    class Meta:
+        verbose_name_plural = "Order Items"
+
 class Contact(models.Model):
     customer_name = models.CharField(max_length=100)
     customer_email = models.EmailField()
@@ -113,7 +126,7 @@ class Contact(models.Model):
 
     def __str__(self):
         return f"Contact from {self.customer_name} on {self.contact_date}"
-    
+
 class Reservation(models.Model):
     customer_name = models.CharField(max_length=100)
     customer_email = models.EmailField()
