@@ -394,7 +394,7 @@ def payment(request, order_id):
         data = {
             'email': email,
             'amount': amount_in_kobo,
-            'callback_url': 'http://127.0.0.1:8000/verify/',
+            'callback_url': '/verify/',
             'metadata': {
                 'order_id': order.id,
             }
