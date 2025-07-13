@@ -394,7 +394,7 @@ def payment(request, order_id):
         data = {
             'email': email,
             'amount': amount_in_kobo,
-            'callback_url': '/verify/',
+            'callback_url': 'https://thesavorybites.onrender.com/verify/',
             'metadata': {
                 'order_id': order.id,
             }
