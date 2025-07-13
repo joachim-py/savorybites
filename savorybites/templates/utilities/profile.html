@@ -23,7 +23,7 @@
   }
 </style>
 {% endblock %}
-{% block title %}Profile Dashboard{% endblock title %}
+{% block title %}User Profile{% endblock title %}
 
 {% block content %}
 <div class="w-90 mx-auto md:mx-10 pt-20">
@@ -194,7 +194,7 @@
         {% endif %}
       </div>
 
-      <!-- Modal Structure -->
+      <!-- Modal Structure for Order Details -->
       <div id="orderModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-40 flex items-center justify-center">
         <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative">
           <button onclick="closeOrderModal()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
@@ -204,11 +204,12 @@
           </div>
         </div>
       </div>
+      <!-- Modal Structure for Order Details -->
 
     </div>
 
-       <!-- Reservations Section -->
-       <div id="reservations-section" class="hidden col-span-3">
+      <!-- Reservations Section -->
+      <div id="reservations-section" class="hidden col-span-3">
         <div class="bg-white rounded-lg shadow-md p-6">
           <h3 class="text-xl font-bold text-amber-800 mb-4">My Reservations</h3>
           
@@ -326,6 +327,7 @@
           {% endif %}
         </div>
       </div>
+      <!-- Reservations Section -->
 
     <!-- Payments Section -->
     <div id="payments-section" class="hidden col-span-3"> 
@@ -386,91 +388,90 @@
         
       </div>
     </div>
+    <!-- Payments Section -->
 
   </div>
 </div>
-
 {% endblock %}
 
 {% block customJS %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-  // Global function to handle receipt printing
-  function printReceiptToPDF(paperSize = '80mm') {
-    try {
-      // 1. Get original receipt element
-      const originalReceipt = document.getElementById('receipt-content');
-      if (!originalReceipt) {
-        alert('Receipt content not found!');
-        return;
-      }
-  
-      // 2. Create a deep clone with all styles
-      const receiptClone = originalReceipt.cloneNode(true);
-      
-      // 3. Apply critical inline styles to ensure visibility
-      receiptClone.style.visibility = 'visible';
-      receiptClone.style.opacity = '1';
-      receiptClone.style.position = 'relative';
-      receiptClone.style.zIndex = '9999';
-      receiptClone.style.backgroundColor = 'white';
-      receiptClone.style.color = 'black';
-      receiptClone.style.fontFamily = 'Courier New, monospace';
-      receiptClone.style.fontSize = paperSize === '58mm' ? '8px' : '10px';
-      receiptClone.style.padding = '5mm';
-      receiptClone.style.width = paperSize;
-  
-      // 4. Create a temporary container
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'fixed';
-      tempContainer.style.left = '0';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '100%';
-      tempContainer.style.height = '100%';
-      tempContainer.style.overflow = 'hidden';
-      tempContainer.style.zIndex = '-1000';
-      tempContainer.appendChild(receiptClone);
-      document.body.appendChild(tempContainer);
-  
-      // 5. PDF Options
-      const options = {
-        margin: 0,
-        filename: `receipt_${Date.now()}.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { 
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          scrollX: 0,
-          scrollY: 0,
-          width: receiptClone.offsetWidth,
-          height: receiptClone.scrollHeight
-        },
-        jsPDF: { 
-          unit: 'mm',
-          format: [paperSize === '58mm' ? 58 : 80, 297], // A4 height for dynamic content
-          orientation: 'portrait'
+    // Global function to handle receipt printing
+    function printReceiptToPDF(paperSize = '80mm') {
+      try {
+        // 1. Get original receipt element
+        const originalReceipt = document.getElementById('receipt-content');
+        if (!originalReceipt) {
+          alert('Receipt content not found!');
+          return;
         }
-      };
-  
-      // 6. Generate PDF
-      html2pdf()
-        .set(options)
-        .from(receiptClone)
-        .save()
-        .then(() => {
-          document.body.removeChild(tempContainer);
-          console.log('PDF generated successfully');
-        });
-  
-    } catch (error) {
-      console.error('PDF Error:', error);
-      alert('PDF generation failed. Check console for details.');
+    
+        // 2. Create a deep clone with all styles
+        const receiptClone = originalReceipt.cloneNode(true);
+        
+        // 3. Apply critical inline styles to ensure visibility
+        receiptClone.style.visibility = 'visible';
+        receiptClone.style.opacity = '1';
+        receiptClone.style.position = 'relative';
+        receiptClone.style.zIndex = '9999';
+        receiptClone.style.backgroundColor = 'white';
+        receiptClone.style.color = 'black';
+        receiptClone.style.fontFamily = 'Courier New, monospace';
+        receiptClone.style.fontSize = paperSize === '58mm' ? '8px' : '10px';
+        receiptClone.style.padding = '5mm';
+        receiptClone.style.width = paperSize;
+    
+        // 4. Create a temporary container
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'fixed';
+        tempContainer.style.left = '0';
+        tempContainer.style.top = '0';
+        tempContainer.style.width = '100%';
+        tempContainer.style.height = '100%';
+        tempContainer.style.overflow = 'hidden';
+        tempContainer.style.zIndex = '-1000';
+        tempContainer.appendChild(receiptClone);
+        document.body.appendChild(tempContainer);
+    
+        // 5. PDF Options
+        const options = {
+          margin: 0,
+          filename: `receipt_${Date.now()}.pdf`,
+          image: { type: 'jpeg', quality: 1 },
+          html2canvas: { 
+            scale: 2,
+            logging: false,
+            useCORS: true,
+            scrollX: 0,
+            scrollY: 0,
+            width: receiptClone.offsetWidth,
+            height: receiptClone.scrollHeight
+          },
+          jsPDF: { 
+            unit: 'mm',
+            format: [paperSize === '58mm' ? 58 : 80, 297], // A4 height for dynamic content
+            orientation: 'portrait'
+          }
+        };
+    
+        // 6. Generate PDF
+        html2pdf()
+          .set(options)
+          .from(receiptClone)
+          .save()
+          .then(() => {
+            document.body.removeChild(tempContainer);
+            console.log('PDF generated successfully');
+          });
+    
+      } catch (error) {
+        console.error('PDF Error:', error);
+        alert('PDF generation failed. Check console for details.');
+      }
     }
-  }
 
-  // Enhanced function to apply receipt-specific styles
-  function applyReceiptStyles(element, fontSize) {
+    // Enhanced function to apply receipt-specific styles
+    function applyReceiptStyles(element, fontSize) {
     // Set base font size
     const baseFontSize = parseInt(fontSize);
     
@@ -557,148 +558,151 @@
         el.style.display = 'block';
       }
     });
-  }
-
-  // Enhanced function with better error handling and user feedback
-  function printReceiptToPDFWithSize() {
-    // Check if receipt content exists
-    const receiptContent = document.getElementById('receipt-content');
-    if (!receiptContent) {
-      alert('Please open an order first to print its receipt.');
-      return;
     }
+
+    // Enhanced function with better error handling and user feedback
+    function printReceiptToPDFWithSize() {
+      // Check if receipt content exists
+      const receiptContent = document.getElementById('receipt-content');
+      if (!receiptContent) {
+        alert('Please open an order first to print its receipt.');
+        return;
+      }
     
-    // Create a modal to select paper size
-    const modal = document.createElement('div');
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '9999';
+      // Create a modal to select paper size
+      const modal = document.createElement('div');
+      modal.style.position = 'fixed';
+      modal.style.top = '0';
+      modal.style.left = '0';
+      modal.style.width = '100%';
+      modal.style.height = '100%';
+      modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.zIndex = '9999';
     
-    modal.innerHTML = `
-      <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 300px;">
-        <h3 style="margin-top: 0; color: #333; text-align: center;">Select Receipt Paper Size</h3>
-        <div style="margin: 15px 0;">
-          <button onclick="printReceiptToPDF('58mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
-                  style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-            58mm (2.28") - Mobile Printer
-          </button>
-          <button onclick="printReceiptToPDF('80mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
-                  style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-            80mm (3.15") - Standard Receipt
-          </button>
-          <button onclick="printReceiptToPDF('112mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
-                  style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-            112mm (4.41") - Wide Format
+      modal.innerHTML = `
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 300px;">
+          <h3 style="margin-top: 0; color: #333; text-align: center;">Select Receipt Paper Size</h3>
+          <div style="margin: 15px 0;">
+            <button onclick="printReceiptToPDF('58mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
+                    style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+              58mm (2.28") - Mobile Printer
+            </button>
+            <button onclick="printReceiptToPDF('80mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
+                    style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+              80mm (3.15") - Standard Receipt
+            </button>
+            <button onclick="printReceiptToPDF('112mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
+                    style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+              112mm (4.41") - Wide Format
+            </button>
+          </div>
+          <button onclick="document.body.removeChild(this.closest('.modal-overlay'))" 
+                  style="width: 100%; padding: 8px; background: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+            Cancel
           </button>
         </div>
-        <button onclick="document.body.removeChild(this.closest('.modal-overlay'))" 
-                style="width: 100%; padding: 8px; background: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-          Cancel
-        </button>
-      </div>
-    `;
+      `;
     
-    modal.className = 'modal-overlay';
-    document.body.appendChild(modal);
+      modal.className = 'modal-overlay';
+      document.body.appendChild(modal);
     
-    // Close modal when clicking outside
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        document.body.removeChild(modal);
-      }
-    });
-  }
-
-  // Function to show order details in a modal
-  function showOrderModal(event, orderId) {
-    event.preventDefault();
-    const modal = document.getElementById('orderModal');
-    const content = document.getElementById('orderModalContent');
-    modal.classList.remove('hidden');
-    content.innerHTML = '<div class="text-center text-gray-500 py-8">Loading...</div>';
-    fetch(`/orders/${orderId}/details/`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'success') {
-          let html = `
-            <div id="receipt-content" class="max-w-lg mx-auto bg-white border border-gray-300 rounded shadow p-6 receipt-font">
-              <div class="text-center mb-4">
-                <h2 class="text-2xl font-bold text-amber-700">Savory Bites Restaurant</h2>
-                <div class="text-xs text-gray-600">123 Foodie Lane, Gourmet City, NG</div>
-                <div class="text-xs text-gray-600">Phone: 0706-278-2727 | Email: info@savorybites.com</div>
-                <div class="border-b border-dashed border-gray-300 my-2"></div>
-                <div class="text-sm font-semibold text-gray-700">Order Receipt</div>
-              </div>
-              <div class="mb-2 text-xs text-gray-700">
-                <div><span class="font-semibold">Order ID:</span> ${data.order.order_id}</div>
-                <div><span class="font-semibold">Date:</span> ${data.order.order_date}</div>
-                <div><span class="font-semibold">Status:</span> ${data.order.status}</div>
-                <div><span class="font-semibold">Payment Status:</span> ${data.order.payment_status}</div>
-              </div>
-              <div class="border-b border-dashed border-gray-300 my-2"></div>
-              <div class="mb-2">
-                <table class="w-full text-xs">
-                  <thead>
-                    <tr class="border-b border-gray-200">
-                      <th class="py-1 text-left">Item</th>
-                      <th class="py-1 text-center">Qty</th>
-                      <th class="py-1 text-right">Price</th>
-                      <th class="py-1 text-right">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-          `;
-          data.items.forEach(item => {
-            html += `
-                    <tr>
-                      <td class="py-1">${item.name}</td>
-                      <td class="py-1 text-center">${item.quantity}</td>
-                      <td class="py-1 text-right">₦${item.price}</td>
-                      <td class="py-1 text-right">₦${item.subtotal}</td>
-                    </tr>
-            `;
-          });
-          html += `
-            </tbody>
-            </table>
-              </div>
-              <div class="border-b border-dashed border-gray-300 my-2"></div>
-              <div class="flex justify-between items-center text-sm font-bold text-gray-800 mb-2">
-                <span>Total</span>
-                <span>₦${data.order.total_price}</span>
-              </div>
-              <div class="text-center text-xs text-gray-500 mt-4">
-                Thank you for dining with us!<br/>
-                Please keep this receipt for your records.
-              </div>
-            </div>
-            <div class="flex justify-end mt-4">
-              <button onclick="printReceiptToPDFWithSize()" class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition font-semibold text-xs">
-                Print Receipt
-              </button>
-            </div>
-          `;
-          content.innerHTML = html;
-          // Print receipt to PDF using html2pdf will be handled by the global function
-        } else {
-          content.innerHTML = `<div class="text-red-500">${data.message}</div>`;
+      // Close modal when clicking outside
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
         }
-      })
-      .catch(() => {
-        content.innerHTML = '<div class="text-red-500">Failed to load order details.</div>';
       });
-  }
-  function closeOrderModal() {
-    document.getElementById('orderModal').classList.add('hidden');
-  }
-// Function to switch tabs
+
+    }
+
+    // Function to show order details in a modal
+    function showOrderModal(event, orderId) {
+      event.preventDefault();
+      const modal = document.getElementById('orderModal');
+      const content = document.getElementById('orderModalContent');
+      modal.classList.remove('hidden');
+      content.innerHTML = '<div class="text-center text-gray-500 py-8">Loading...</div>';
+      fetch(`/orders/${orderId}/details/`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            let html = `
+              <div id="receipt-content" class="max-w-lg mx-auto bg-white border border-gray-300 rounded shadow p-6 receipt-font">
+                <div class="text-center mb-4">
+                  <h2 class="text-2xl font-bold text-amber-700">Savory Bites Restaurant</h2>
+                  <div class="text-xs text-gray-600">123 Foodie Lane, Gourmet City, NG</div>
+                  <div class="text-xs text-gray-600">Phone: 0706-278-2727 | Email: info@savorybites.com</div>
+                  <div class="border-b border-dashed border-gray-300 my-2"></div>
+                  <div class="text-sm font-semibold text-gray-700">Order Receipt</div>
+                </div>
+                <div class="mb-2 text-xs text-gray-700">
+                  <div><span class="font-semibold">Order ID:</span> ${data.order.order_id}</div>
+                  <div><span class="font-semibold">Date:</span> ${data.order.order_date}</div>
+                  <div><span class="font-semibold">Status:</span> ${data.order.status}</div>
+                  <div><span class="font-semibold">Payment Status:</span> ${data.order.payment_status}</div>
+                </div>
+                <div class="border-b border-dashed border-gray-300 my-2"></div>
+                <div class="mb-2">
+                  <table class="w-full text-xs">
+                    <thead>
+                      <tr class="border-b border-gray-200">
+                        <th class="py-1 text-left">Item</th>
+                        <th class="py-1 text-center">Qty</th>
+                        <th class="py-1 text-right">Price</th>
+                        <th class="py-1 text-right">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+            `;
+            data.items.forEach(item => {
+              html += `
+                      <tr>
+                        <td class="py-1">${item.name}</td>
+                        <td class="py-1 text-center">${item.quantity}</td>
+                        <td class="py-1 text-right">₦${item.price}</td>
+                        <td class="py-1 text-right">₦${item.subtotal}</td>
+                      </tr>
+              `;
+            });
+            html += `
+              </tbody>
+              </table>
+                </div>
+                <div class="border-b border-dashed border-gray-300 my-2"></div>
+                <div class="flex justify-between items-center text-sm font-bold text-gray-800 mb-2">
+                  <span>Total</span>
+                  <span>₦${data.order.total_price}</span>
+                </div>
+                <div class="text-center text-xs text-gray-500 mt-4">
+                  Thank you for dining with us!<br/>
+                  Please keep this receipt for your records.
+                </div>
+              </div>
+              <div class="flex justify-end mt-4">
+                <button onclick="printReceiptToPDFWithSize()" class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition font-semibold text-xs">
+                  Print Receipt
+                </button>
+              </div>
+            `;
+            content.innerHTML = html;
+            // Print receipt to PDF using html2pdf will be handled by the global function
+          } else {
+            content.innerHTML = `<div class="text-red-500">${data.message}</div>`;
+          }
+        })
+        .catch(() => {
+          content.innerHTML = '<div class="text-red-500">Failed to load order details.</div>';
+        });
+    }
+
+    function closeOrderModal() {
+      document.getElementById('orderModal').classList.add('hidden');
+    }
+
+    // Function to switch tabs
     function switchTab(tabName) {
       const section = tabName + '-section';
       
@@ -801,5 +805,6 @@
       // Start observing the document with the configured parameters
       observer.observe(document.body, { childList: true, subtree: true });
     });
-  </script>
+
+</script>
 {% endblock customJS %}

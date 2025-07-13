@@ -17,65 +17,8 @@ from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from savorybites.models import (CartItem, Contact, Delivery, Gallery, Menu, Order, OrderItem,
                                 Payment, Profile, Reservation, Review, Special)
 
-    
-def index(request):
-    today = datetime.now().date()
 
-    specials = Special.objects.select_related('menu_item')
-    menu_items = Menu.objects.filter(is_available=True).prefetch_related('specials')
-
-    gallery = list(Gallery.objects.all())
-    shuffle(gallery)
-
-    reviews = list(Review.objects.all())
-    shuffle(reviews)
-
-    categories = Menu.CategoryChoices.choices
-    featured_items = {}
-    for category in categories:
-        items = Menu.objects.filter(category=category[0], is_available=True)
-        if items.exists():
-            featured_items[category[0]] = items.first()
-
-    if request.user.is_authenticated:
-        cart_count = CartItem.objects.filter(user=request.user).count()
-    else:
-        session_key = request.session.session_key
-        if not session_key:
-            request.session.save()
-            session_key = request.session.session_key
-        cart_count = CartItem.objects.filter(session_key=session_key, user__isnull=True).count()
-
-    context = {
-        'menu_items': menu_items,
-        'specials': specials,
-        'gallery': gallery[:8],
-        'reviews': reviews[:3],
-        'featured_items': featured_items,
-        'cart_count': cart_count
-    }
-
-    return render(request, 'index.html', context)
-
-def contact_us(request):
-    if request.method == 'POST':
-        data = request.POST
-        
-        customer_name = data.get('contact_name')
-        customer_email = data.get('contact_email')
-        subject = data.get('contact_subject')
-        message = data.get('contact_message')
-
-        Contact.objects.create(
-            customer_name=customer_name,
-            customer_email=customer_email,
-            subject=subject,
-            message=message,
-            contact_date=datetime.now().date(),
-        )
-
-    return JsonResponse({'status': "success", 'message': 'Message was sent successfully!'})
-
+# Add item to cart
 @require_POST
 def add_to_cart(request):
     try:
@@ -132,6 +75,7 @@ def add_to_cart(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
+# Remove item from cart
 @require_POST
 def remove_from_cart(request, cart_item_id):
     try:
@@ -165,6 +109,7 @@ def remove_from_cart(request, cart_item_id):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
+# Update item quantity in cart
 @require_POST
 def update_cart_quantity(request, cart_item_id):
     try:
@@ -210,6 +155,7 @@ def update_cart_quantity(request, cart_item_id):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
+# Clear cart
 @require_POST
 def clear_cart(request):
     try:
@@ -234,6 +180,438 @@ def clear_cart(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
+# Payment verification callback
+def payment_callback(request):
+    reference = request.GET.get('reference')
+    
+    if reference:
+        try:
+            # Verify payment
+            headers = {
+                'Authorization': f'Bearer {config("PAYSTACK_SECRET_KEY")}',
+                'Content-Type': 'application/json',
+            }
+            response = requests.get(f'https://api.paystack.co/transaction/verify/{reference}', headers=headers)
+            response = response.json()
+            
+            if response['status'] and response['data']['status'] == 'success':
+                # Update payment status
+                payment_method = response['data'].get('channel', 'card')
+                payment = Payment.objects.get(reference=reference)
+                payment.status = 'completed'
+                payment.payment_method = payment_method
+                payment.save()
+                
+                # Update order status
+                order = payment.order
+                
+                if order.delivery_option == 'delivery':
+                    total_amount = order.total_price + (2800 if order.total_price > 9000 and order.total_price < 450000 else 1500)
+                else:
+                    total_amount = order.total_price
+                
+                order.delivery_price = total_amount
+                order.payment_status = 'paid'
+                order.status = 'confirmed'
+                order.save()
+                
+                # Clear cart AFTER successful payment
+                if order.user:
+                    CartItem.objects.filter(user=order.user).delete()
+                
+                # Create Order Delivery
+                Delivery.objects.create(
+                    order=order,
+                    delivery_date=datetime.now().date(),
+                )
+                
+                messages.success(request, 'Payment successful! Your order has been confirmed.')
+                return redirect('profile')
+            else:
+                messages.error(request, 'Payment verification failed')
+                return redirect('payment', order_id=payment.order.id)
+                
+        except Payment.DoesNotExist:
+            messages.error(request, 'Payment record not found')
+            return redirect('menu')
+        except Exception as e:
+            messages.error(request, f'Payment verification failed: {str(e)}')
+            return redirect('menu')
+    
+    messages.error(request, 'Invalid payment reference')
+    return redirect('menu')
+
+# @login_required
+# def orders(request):
+#     session_key = request.session.session_key
+#     if not session_key:
+#         request.session.save()
+#         session_key = request.session.session_key
+
+#     if request.user.is_authenticated:
+#         orders = Order.objects.filter(user=request.user).order_by('-order_date')
+#         cart_items = CartItem.objects.filter(user=request.user)
+#     else:
+#         orders = Order.objects.filter(session_key=session_key).order_by('-order_date')
+#         cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
+
+#     paginator = Paginator(orders, 10)
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
+
+#     cart_count = cart_items.count()
+
+#     return render(request, 'utilities/orders.html', {
+#         'orders': page_obj,
+#         'cart_count': cart_count
+#     })
+
+# Order details JSON
+@login_required
+def order_details_json(request, order_id):
+    try:
+        order = get_object_or_404(Order, pk=order_id)
+
+        # check if user or session matches the order
+        if request.user.is_authenticated:
+            if order.user != request.user:
+                return JsonResponse({'status': 'error', 'message': 'Unauthorized access'}, status=403)
+        else:
+            session_key = request.session.session_key
+            if not session_key or order.session_key != session_key:
+                return JsonResponse({'status': 'error', 'message': 'Unauthorized access'}, status=403)
+
+        items = [{
+            'name': item.menu_item_name,
+            'quantity': item.quantity,
+            'price': float(item.menu_item_price),
+            'subtotal': float(item.menu_item_price * item.quantity)
+        } for item in order.order_items.all()]
+
+        return JsonResponse({
+            'status': 'success',
+            'order': {
+                'id': order.id,
+                'order_id': order.order_id,
+                'order_date': order.order_date.strftime('%Y-%m-%d'),
+                'status': order.status,
+                'payment_status': order.payment_status,
+                'total_price': float(order.total_price)
+            },
+            'items': items
+        })
+
+    except Order.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Order not found'}, status=404)
+
+# Book Reservation
+@require_http_methods(["POST"])
+def book_reservation(request):
+    try:
+        # Get form data
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        guests = request.POST.get('guests')
+        date = request.POST.get('date')
+        time = request.POST.get('time')
+        special_requests = request.POST.get('special_request', '')
+        
+        # Input validation
+        if not all([name, email, phone, guests, date, time]):
+            return JsonResponse({'status': 'error', 'message': 'All fields are required'}, status=400)
+            
+        try:
+            validate_email(email)
+        except ValidationError:
+            return JsonResponse({'status': 'error', 'message': 'Please enter a valid email address'}, status=400)
+            
+        # Create reservation
+        Reservation.objects.create(
+            customer_name=name,
+            customer_email=email,
+            customer_phone=phone,
+            number_of_guests=guests,
+            reservation_date=date,
+            reservation_time=time,
+            special_requests=special_requests,
+            user=request.user
+        )
+        
+        return JsonResponse({
+            'status': 'success', 
+            'message': 'Your reservation has been booked successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+# Authentication & Registeration
+# Login
+def login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        remember = request.POST.get('remember')
+        next_url = request.POST.get('next') or 'index'
+        login_source = request.POST.get('login_source')
+        
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            session_key = request.session.session_key
+            if session_key:
+                session_cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
+
+                for item in session_cart_items:
+                    existing = CartItem.objects.filter(user=user, menu_item=item.menu_item).first()
+                    if existing:
+                        existing.quantity += item.quantity
+                        existing.save()
+                        item.delete()
+                    else:
+                        item.user = user
+                        item.session_key = None
+                        item.save()
+
+            auth_login(request, user)
+            request.session.set_expiry(0 if not remember else 1209600)
+
+            # messages.success(request, 'Logged in successfully!')
+
+            if login_source == 'modal' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'redirect_url': next_url})
+
+            return redirect(next_url)
+        else:
+            if login_source == 'modal' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Invalid username or password'})
+            messages.error(request, 'Invalid username or password')
+    return render(request, 'login.html')
+
+# Logout
+@login_required
+def logout(request):
+    user = request.user
+    session_key = request.session.session_key
+    if not session_key:
+        request.session.save()
+        session_key = request.session.session_key
+
+    if user.is_authenticated:
+        user_cart_items = CartItem.objects.filter(user=user)
+
+        for item in user_cart_items:
+            session_item = CartItem.objects.filter(session_key=session_key, menu_item=item.menu_item, user__isnull=True).first()
+            if session_item:
+                session_item.quantity += item.quantity
+                session_item.save()
+                item.delete()
+            else:
+                item.session_key = session_key
+                item.user = None
+                item.save()
+
+    auth_logout(request)
+    return redirect('login')
+
+# Signup
+def signup(request):
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        
+        # Validate required fields
+        if not all([username, email, password, confirm_password]):
+            messages.error(request, 'All fields are required')
+            return redirect('signup')
+            
+        # Validate email format
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            messages.error(request, 'Please enter a valid email address')
+            return redirect('signup')
+            
+        # Check if email already exists
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered')
+            return redirect('signup')
+            
+        # Check if username already exists
+        if User.objects.filter(username=username).exists():
+            messages.error(request, 'Username already taken')
+            return redirect('signup')
+            
+        # Validate username
+        if len(username) < 3:
+            messages.error(request, 'Username must be at least 3 characters long')
+            return redirect('signup')
+            
+        if not username.isalnum():
+            messages.error(request, 'Username must be alphanumeric')
+            return redirect('signup')
+            
+        # Validate password
+        if not password:
+            messages.error(request, 'Password is required')
+            return redirect('signup')
+            
+        if len(password) < 6:
+            messages.error(request, 'Password must be at least 6 characters long')
+            return redirect('signup')
+            
+        if password != confirm_password:
+            messages.error(request, 'Passwords do not match')
+            return redirect('signup')
+
+        try:
+            user = User.objects.create_user(username=username, email=email, password=password)
+            Profile.objects.create(user=user)
+            messages.success(request, 'Account created successfully! Please log in.')
+            return redirect('login')
+        except Exception as e:
+            messages.error(request, f'Error creating account: {str(e)}')
+            return redirect('signup')
+
+    return render(request, 'signup.html')
+
+# Pages
+# Home page
+def index(request):
+    today = datetime.now().date()
+
+    specials = Special.objects.select_related('menu_item')
+    menu_items = Menu.objects.filter(is_available=True).prefetch_related('specials')
+
+    gallery = list(Gallery.objects.all())
+    shuffle(gallery)
+
+    reviews = list(Review.objects.all())
+    shuffle(reviews)
+
+    categories = Menu.CategoryChoices.choices
+    featured_items = {}
+    for category in categories:
+        items = Menu.objects.filter(category=category[0], is_available=True)
+        if items.exists():
+            featured_items[category[0]] = items.first()
+
+    if request.user.is_authenticated:
+        cart_count = CartItem.objects.filter(user=request.user).count()
+    else:
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.save()
+            session_key = request.session.session_key
+        cart_count = CartItem.objects.filter(session_key=session_key, user__isnull=True).count()
+
+    context = {
+        'menu_items': menu_items,
+        'specials': specials,
+        'gallery': gallery[:8],
+        'reviews': reviews[:3],
+        'featured_items': featured_items,
+        'cart_count': cart_count
+    }
+
+    return render(request, 'index.html', context)
+
+# Menu
+def menu(request):
+    # Ensuring session exists for guest users
+    session_key = request.session.session_key
+    if not session_key:
+        request.session.save()
+        session_key = request.session.session_key
+
+    # Get menu categories and items
+    categories = Menu.CategoryChoices.choices
+    menu_items = Menu.objects.filter(is_available=True)
+
+    # Filter by category if provided
+    category = request.GET.get('category')
+    if category and category in dict(Menu.CategoryChoices.choices):
+        menu_items = menu_items.filter(category=category)
+        
+    if request.user.is_authenticated:
+        cart_items = CartItem.objects.filter(user=request.user)
+    else:
+        cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
+
+    cart_count = cart_items.count()
+    
+    context = {
+        'menu_items': menu_items,
+        'categories': categories,
+        'cart_count': cart_count,
+        'title': 'Menu',
+        'description': 'Explore our menu of delectable dishes.',
+        'hero_image': 'menu_banner.jpg'
+    }
+
+    return render(request, 'layout.html', context)
+
+# Contact us
+def contact_us(request):
+    if request.method == 'POST':
+        Contact.objects.create(
+            customer_name=request.POST.get('contact_name'),
+            customer_email=request.POST.get('contact_email'),
+            subject=request.POST.get('contact_subject'),
+            message=request.POST.get('contact_message')
+        )
+        messages.success(request, 'Message sent successfully!')
+        return redirect('contact_us')
+    context = {
+        'title': 'Contact Us',
+        'description': 'Contact us for any inquiries or feedback.',
+        'hero_image': 'contact_banner.jpg'
+    }
+    return render(request, 'utilities/contact.html', context)
+
+# Reservations
+def reservations(request):
+    if request.user.is_authenticated:
+        reservations = Reservation.objects.filter(
+            user=request.user
+        ).order_by('-reservation_date')        
+        return render(request, 'utilities/reservations.html', {
+            'reservations': reservations,
+            'title': 'Reservations',
+            'description': 'Make your reservations here',
+            'hero_image': 'reservation_banner.jpg'
+        })
+    return redirect('login')
+
+# Reviews
+def reviews(request):
+    if request.method == 'POST':
+        Review.objects.create(
+            customer_name=request.POST.get('name'),
+            customer_occupation=request.POST.get('occupation'),
+            rating=request.POST.get('rating'),
+            comment=request.POST.get('comment')
+        )
+        messages.success(request, 'Review submitted successfully!')
+        return redirect('reviews')
+    
+    reviews = Review.objects.all().order_by('-review_date')
+    return render(request, 'utilities/reviews.html', {
+        'reviews': reviews
+    })
+
+# Gallery
+def gallery(request):
+    gallery_items = Gallery.objects.all().order_by('-upload_date')
+    context = {
+        'gallery': gallery_items,
+        'title': 'Gallery',
+        'description': 'Our Gallery',
+        'hero_image': 'gallery_banner.jpg'
+    }
+    return render(request, 'utilities/gallery.html', context)
+
+# View cart
 def view_cart(request):
     # Get cart items based on authentication status
     if request.user.is_authenticated:
@@ -257,6 +635,7 @@ def view_cart(request):
 
     return render(request, 'utilities/cart.html', context)
 
+# Checkout
 @login_required
 def checkout(request):
     try:
@@ -349,6 +728,7 @@ def checkout(request):
         'cart_count': cart_count,
     })
 
+# Payment
 @login_required
 @csrf_protect
 def payment(request, order_id):
@@ -439,384 +819,7 @@ def payment(request, order_id):
         'PAYSTACK_PUBLIC_KEY': config('PAYSTACK_PUBLIC_KEY')
     })
 
-def payment_callback(request):
-    reference = request.GET.get('reference')
-    
-    if reference:
-        try:
-            # Verify payment
-            headers = {
-                'Authorization': f'Bearer {config("PAYSTACK_SECRET_KEY")}',
-                'Content-Type': 'application/json',
-            }
-            response = requests.get(f'https://api.paystack.co/transaction/verify/{reference}', headers=headers)
-            response = response.json()
-            
-            if response['status'] and response['data']['status'] == 'success':
-                # Update payment status
-                payment_method = response['data'].get('channel', 'card')
-                payment = Payment.objects.get(reference=reference)
-                payment.status = 'completed'
-                payment.payment_method = payment_method
-                payment.save()
-                
-                # Update order status
-                order = payment.order
-                
-                if order.delivery_option == 'delivery':
-                    total_amount = order.total_price + (2800 if order.total_price > 9000 and order.total_price < 450000 else 1500)
-                else:
-                    total_amount = order.total_price
-                
-                order.delivery_price = total_amount
-                order.payment_status = 'paid'
-                order.status = 'confirmed'
-                order.save()
-                
-                # Clear cart AFTER successful payment
-                if order.user:
-                    CartItem.objects.filter(user=order.user).delete()
-                
-                # Create Order Delivery
-                Delivery.objects.create(
-                    order=order,
-                    delivery_date=datetime.now().date(),
-                )
-                
-                messages.success(request, 'Payment successful! Your order has been confirmed.')
-                return redirect('profile')
-            else:
-                messages.error(request, 'Payment verification failed')
-                return redirect('payment', order_id=payment.order.id)
-                
-        except Payment.DoesNotExist:
-            messages.error(request, 'Payment record not found')
-            return redirect('menu')
-        except Exception as e:
-            messages.error(request, f'Payment verification failed: {str(e)}')
-            return redirect('menu')
-    
-    messages.error(request, 'Invalid payment reference')
-    return redirect('menu')
-
-@login_required
-def orders(request):
-    session_key = request.session.session_key
-    if not session_key:
-        request.session.save()
-        session_key = request.session.session_key
-
-    if request.user.is_authenticated:
-        orders = Order.objects.filter(user=request.user).order_by('-order_date')
-        cart_items = CartItem.objects.filter(user=request.user)
-    else:
-        orders = Order.objects.filter(session_key=session_key).order_by('-order_date')
-        cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
-
-    paginator = Paginator(orders, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    cart_count = cart_items.count()
-
-    return render(request, 'utilities/orders.html', {
-        'orders': page_obj,
-        'cart_count': cart_count
-    })
-
-@login_required
-def order_details_json(request, order_id):
-    try:
-        order = get_object_or_404(Order, pk=order_id)
-
-        # check if user or session matches the order
-        if request.user.is_authenticated:
-            if order.user != request.user:
-                return JsonResponse({'status': 'error', 'message': 'Unauthorized access'}, status=403)
-        else:
-            session_key = request.session.session_key
-            if not session_key or order.session_key != session_key:
-                return JsonResponse({'status': 'error', 'message': 'Unauthorized access'}, status=403)
-
-        items = [{
-            'name': item.menu_item_name,
-            'quantity': item.quantity,
-            'price': float(item.menu_item_price),
-            'subtotal': float(item.menu_item_price * item.quantity)
-        } for item in order.order_items.all()]
-
-        return JsonResponse({
-            'status': 'success',
-            'order': {
-                'id': order.id,
-                'order_id': order.order_id,
-                'order_date': order.order_date.strftime('%Y-%m-%d'),
-                'status': order.status,
-                'payment_status': order.payment_status,
-                'total_price': float(order.total_price)
-            },
-            'items': items
-        })
-
-    except Order.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Order not found'}, status=404)
-
-def menu(request):
-    # Ensuring session exists for guest users
-    session_key = request.session.session_key
-    if not session_key:
-        request.session.save()
-        session_key = request.session.session_key
-
-    # Get menu categories and items
-    categories = Menu.CategoryChoices.choices
-    menu_items = Menu.objects.filter(is_available=True)
-
-    # Filter by category if provided
-    category = request.GET.get('category')
-    if category and category in dict(Menu.CategoryChoices.choices):
-        menu_items = menu_items.filter(category=category)
-        
-    if request.user.is_authenticated:
-        cart_items = CartItem.objects.filter(user=request.user)
-    else:
-        cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
-
-    cart_count = cart_items.count()
-    
-    context = {
-        'menu_items': menu_items,
-        'categories': categories,
-        'cart_count': cart_count,
-        'title': 'Menu',
-        'description': 'Explore our menu of delectable dishes.',
-        'hero_image': 'menu_banner.jpg'
-    }
-
-    return render(request, 'layout.html', context)
-
-def contact_us(request):
-    if request.method == 'POST':
-        Contact.objects.create(
-            customer_name=request.POST.get('contact_name'),
-            customer_email=request.POST.get('contact_email'),
-            subject=request.POST.get('contact_subject'),
-            message=request.POST.get('contact_message')
-        )
-        messages.success(request, 'Message sent successfully!')
-        return redirect('contact_us')
-    context = {
-        'title': 'Contact Us',
-        'description': 'Contact us for any inquiries or feedback.',
-        'hero_image': 'contact_banner.jpg'
-    }
-    return render(request, 'utilities/contact.html', context)
-
-@require_http_methods(["POST"])
-def book_reservation(request):
-    try:
-        # Get form data
-        name = request.POST.get('name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        guests = request.POST.get('guests')
-        date = request.POST.get('date')
-        time = request.POST.get('time')
-        special_requests = request.POST.get('special_request', '')
-        
-        # Input validation
-        if not all([name, email, phone, guests, date, time]):
-            return JsonResponse({'status': 'error', 'message': 'All fields are required'}, status=400)
-            
-        try:
-            validate_email(email)
-        except ValidationError:
-            return JsonResponse({'status': 'error', 'message': 'Please enter a valid email address'}, status=400)
-            
-        # Create reservation
-        reservation = Reservation.objects.create(
-            customer_name=name,
-            customer_email=email,
-            customer_phone=phone,
-            number_of_guests=guests,
-            reservation_date=date,
-            reservation_time=time,
-            special_requests=special_requests,
-            user=request.user
-        )
-        
-        return JsonResponse({
-            'status': 'success', 
-            'message': 'Your reservation has been booked successfully!'
-        })
-        
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-def reservations(request):
-    if request.user.is_authenticated:
-        reservations = Reservation.objects.filter(
-            user=request.user
-        ).order_by('-reservation_date')        
-        return render(request, 'utilities/reservations.html', {
-            'reservations': reservations,
-            'title': 'Reservations',
-            'description': 'Make your reservations here',
-            'hero_image': 'reservation_banner.jpg'
-        })
-    return redirect('login')
-
-def reviews(request):
-    if request.method == 'POST':
-        Review.objects.create(
-            customer_name=request.POST.get('name'),
-            customer_occupation=request.POST.get('occupation'),
-            rating=request.POST.get('rating'),
-            comment=request.POST.get('comment')
-        )
-        messages.success(request, 'Review submitted successfully!')
-        return redirect('reviews')
-    
-    reviews = Review.objects.all().order_by('-review_date')
-    return render(request, 'utilities/reviews.html', {
-        'reviews': reviews
-    })
-
-def gallery(request):
-    gallery_items = Gallery.objects.all().order_by('-upload_date')
-    context = {
-        'gallery': gallery_items,
-        'title': 'Gallery',
-        'description': 'Our Gallery',
-        'hero_image': 'gallery_banner.jpg'
-    }
-    return render(request, 'utilities/gallery.html', context)
-
-def login(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        remember = request.POST.get('remember')
-        next_url = request.POST.get('next') or 'index'
-        login_source = request.POST.get('login_source')
-        
-        user = authenticate(username=username, password=password)
-        if user is not None:
-            session_key = request.session.session_key
-            if session_key:
-                session_cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
-
-                for item in session_cart_items:
-                    existing = CartItem.objects.filter(user=user, menu_item=item.menu_item).first()
-                    if existing:
-                        existing.quantity += item.quantity
-                        existing.save()
-                        item.delete()
-                    else:
-                        item.user = user
-                        item.session_key = None
-                        item.save()
-
-            auth_login(request, user)
-            request.session.set_expiry(0 if not remember else 1209600)
-
-            # messages.success(request, 'Logged in successfully!')
-
-            if login_source == 'modal' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': True, 'redirect_url': next_url})
-
-            return redirect(next_url)
-        else:
-            if login_source == 'modal' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'message': 'Invalid username or password'})
-            messages.error(request, 'Invalid username or password')
-    return render(request, 'login.html')
-
-@login_required
-def logout(request):
-    user = request.user
-    session_key = request.session.session_key
-    if not session_key:
-        request.session.save()
-        session_key = request.session.session_key
-
-    if user.is_authenticated:
-        user_cart_items = CartItem.objects.filter(user=user)
-
-        for item in user_cart_items:
-            session_item = CartItem.objects.filter(session_key=session_key, menu_item=item.menu_item, user__isnull=True).first()
-            if session_item:
-                session_item.quantity += item.quantity
-                session_item.save()
-                item.delete()
-            else:
-                item.session_key = session_key
-                item.user = None
-                item.save()
-
-    auth_logout(request)
-    return redirect('login')
-
-def signup(request):
-    if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-        email = request.POST.get('email', '').strip()
-        password = request.POST.get('password', '')
-        confirm_password = request.POST.get('confirm_password', '')
-        
-        # Validate required fields
-        if not all([username, email, password, confirm_password]):
-            messages.error(request, 'All fields are required')
-            return redirect('signup')
-            
-        # Validate email format
-        if '@' not in email or '.' not in email.split('@')[-1]:
-            messages.error(request, 'Please enter a valid email address')
-            return redirect('signup')
-            
-        # Check if email already exists
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'Email already registered')
-            return redirect('signup')
-            
-        # Check if username already exists
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'Username already taken')
-            return redirect('signup')
-            
-        # Validate username
-        if len(username) < 3:
-            messages.error(request, 'Username must be at least 3 characters long')
-            return redirect('signup')
-            
-        if not username.isalnum():
-            messages.error(request, 'Username must be alphanumeric')
-            return redirect('signup')
-            
-        # Validate password
-        if not password:
-            messages.error(request, 'Password is required')
-            return redirect('signup')
-            
-        if len(password) < 6:
-            messages.error(request, 'Password must be at least 6 characters long')
-            return redirect('signup')
-            
-        if password != confirm_password:
-            messages.error(request, 'Passwords do not match')
-            return redirect('signup')
-
-        try:
-            user = User.objects.create_user(username=username, email=email, password=password)
-            Profile.objects.create(user=user)
-            messages.success(request, 'Account created successfully! Please log in.')
-            return redirect('login')
-        except Exception as e:
-            messages.error(request, f'Error creating account: {str(e)}')
-            return redirect('signup')
-
-    return render(request, 'signup.html')
-
+# Profile
 @login_required
 def profile(request):
     # Ensure session exists for guests
@@ -892,3 +895,4 @@ def profile(request):
             'cart_count': cart_count
         }
         return render(request, 'utilities/profile.html', context)
+
