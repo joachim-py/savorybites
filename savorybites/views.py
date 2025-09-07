@@ -241,30 +241,30 @@ def payment_callback(request):
     messages.error(request, 'Invalid payment reference')
     return redirect('menu')
 
-# @login_required
-# def orders(request):
-#     session_key = request.session.session_key
-#     if not session_key:
-#         request.session.save()
-#         session_key = request.session.session_key
+@login_required
+def orders(request):
+    session_key = request.session.session_key
+    if not session_key:
+        request.session.save()
+        session_key = request.session.session_key
 
-#     if request.user.is_authenticated:
-#         orders = Order.objects.filter(user=request.user).order_by('-order_date')
-#         cart_items = CartItem.objects.filter(user=request.user)
-#     else:
-#         orders = Order.objects.filter(session_key=session_key).order_by('-order_date')
-#         cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
+    if request.user.is_authenticated:
+        orders = Order.objects.filter(user=request.user).order_by('-order_date')
+        cart_items = CartItem.objects.filter(user=request.user)
+    else:
+        orders = Order.objects.filter(session_key=session_key).order_by('-order_date')
+        cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
 
-#     paginator = Paginator(orders, 10)
-#     page_number = request.GET.get('page')
-#     page_obj = paginator.get_page(page_number)
+    paginator = Paginator(orders, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-#     cart_count = cart_items.count()
+    cart_count = cart_items.count()
 
-#     return render(request, 'utilities/orders.html', {
-#         'orders': page_obj,
-#         'cart_count': cart_count
-#     })
+    return render(request, 'utilities/orders.html', {
+        'orders': page_obj,
+        'cart_count': cart_count
+    })
 
 # Order details JSON
 @login_required
