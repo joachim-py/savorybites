@@ -180,75 +180,6 @@ def clear_cart(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
-# Payment verification callback
-def payment_callback(request):
-    reference = request.GET.get('reference')
-    
-    if reference:
-        try:
-            # Verify payment
-            headers = {
-                'Authorization': f'Bearer {config("PAYSTACK_SECRET_KEY")}',
-                'Content-Type': 'application/json',
-            }
-            response = requests.get(f'https://api.paystack.co/transaction/verify/{reference}', headers=headers)
-            response = response.json()
-            
-            if response['status'] and response['data']['status'] == 'success':
-                # Update payment status
-                payment_method = response['data'].get('channel', 'card')
-                payment = Payment.objects.get(reference=reference)
-                payment.status = 'completed'
-                payment.payment_method = payment_method
-                payment.save()
-                
-                # Update order status
-                order = payment.order
-                
-                if order.delivery_option == 'delivery':
-                    total_amount = order.total_price + (2800 if order.total_price > 9000 and order.total_price < 450000 else 1500)
-                else:
-                    total_amount = order.total_price
-                
-                order.delivery_price = total_amount
-                order.payment_status = 'paid'
-                order.status = 'confirmed'
-                order.save()
-                
-                # Clear cart AFTER successful payment
-                if order.user:
-                    CartItem.objects.filter(user=order.user).delete()
-                
-                # Create Order Delivery
-                Delivery.objects.create(
-                    order=order,
-                    delivery_date=datetime.now().date(),
-                )
-                            
-                # Generate and email the receipt
-                from savorybites.utils import process_order_payment_confirmation
-                order = Order.objects.filter(id=order.id).prefetch_related('order_items').first()
-                process_order_payment_confirmation(order)
-
-                if order.user:
-                    messages.success(request, 'Payment successful! Your order has been confirmed. A receipt has been sent to your email.')
-                    return redirect('profile')
-                else:
-                    return redirect('index')
-            else:
-                messages.error(request, 'Payment verification failed')
-                return redirect('payment', order_id=payment.order.id)
-                
-        except Payment.DoesNotExist:
-            messages.error(request, 'Payment record not found')
-            return redirect('menu')
-        except Exception as e:
-            messages.error(request, f'Payment verification failed: {str(e)}')
-            return redirect('menu')
-    
-    messages.error(request, 'Invalid payment reference')
-    return redirect('menu')
-
 @login_required
 def orders(request):
     session_key = request.session.session_key
@@ -832,8 +763,8 @@ def payment(request, order_id):
         data = {
             'email': email,
             'amount': amount_in_kobo,
-            'callback_url': 'http://localhost:8000/verify/',
-            # 'callback_url': 'https://thesavorybites.onrender.com/verify/',
+            # 'callback_url': 'http://localhost:8000/verify/',
+            'callback_url': 'https://thesavorybites.onrender.com/verify/',
             'metadata': {
                 'order_id': order.id,
             }
@@ -876,6 +807,76 @@ def payment(request, order_id):
         'total_amount': total_amount,
         'PAYSTACK_PUBLIC_KEY': config('PAYSTACK_PUBLIC_KEY')
     })
+
+# Payment verification callback
+def payment_callback(request):
+    reference = request.GET.get('reference')
+    
+    if reference:
+        try:
+            # Verify payment
+            headers = {
+                'Authorization': f'Bearer {config("PAYSTACK_SECRET_KEY")}',
+                'Content-Type': 'application/json',
+            }
+            response = requests.get(f'https://api.paystack.co/transaction/verify/{reference}', headers=headers)
+            response = response.json()
+            
+            if response['status'] and response['data']['status'] == 'success':
+                # Update payment status
+                payment_method = response['data'].get('channel', 'card')
+                payment = Payment.objects.get(reference=reference)
+                payment.status = 'completed'
+                payment.payment_method = payment_method
+                payment.save()
+                
+                # Update order status
+                order = payment.order
+                
+                if order.delivery_option == 'delivery':
+                    total_amount = order.total_price + (2800 if order.total_price > 9000 and order.total_price < 450000 else 1500)
+                else:
+                    total_amount = order.total_price
+                
+                order.delivery_price = total_amount
+                order.payment_status = 'paid'
+                order.status = 'confirmed'
+                order.save()
+                
+                # Clear cart AFTER successful payment
+                if order.user:
+                    CartItem.objects.filter(user=order.user).delete()
+                
+                # Create Order Delivery
+                Delivery.objects.create(
+                    order=order,
+                    delivery_date=datetime.now().date(),
+                )
+                            
+                # Generate and email the receipt
+                from savorybites.utils import process_order_payment_confirmation
+                order = Order.objects.filter(id=order.id).prefetch_related('order_items').first()
+                process_order_payment_confirmation(order)
+
+                if order.user:
+                    messages.success(request, 'Payment successful! Your order has been confirmed. A receipt has been sent to your email.')
+                    return redirect('profile')
+                else:
+                    return redirect('index')
+            else:
+                messages.error(request, 'Payment verification failed')
+                return redirect('payment', order_id=payment.order.id)
+                
+        except Payment.DoesNotExist:
+            messages.error(request, 'Payment record not found')
+            return redirect('menu')
+        except Exception as e:
+            messages.error(request, f'Payment verification failed: {str(e)}')
+            return redirect('menu')
+    
+    messages.error(request, 'Invalid payment reference')
+    return redirect('menu')
+
 
 # Profile
 @login_required
