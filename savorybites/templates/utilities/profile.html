@@ -560,7 +560,7 @@
     });
     }
 
-    // Enhanced function with better error handling and user feedback
+    // Function to print receipt directly in wide format (112mm)
     function printReceiptToPDFWithSize() {
       // Check if receipt content exists
       const receiptContent = document.getElementById('receipt-content');
@@ -568,46 +568,10 @@
         alert('Please open an order first to print its receipt.');
         return;
       }
-    
-      // Create a modal to select paper size
-      const modal = document.createElement('div');
-      modal.style.position = 'fixed';
-      modal.style.top = '0';
-      modal.style.left = '0';
-      modal.style.width = '100%';
-      modal.style.height = '100%';
-      modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-      modal.style.display = 'flex';
-      modal.style.alignItems = 'center';
-      modal.style.justifyContent = 'center';
-      modal.style.zIndex = '9999';
-    
-      modal.innerHTML = `
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 300px;">
-          <h3 style="margin-top: 0; color: #333; text-align: center;">Select Receipt Paper Size</h3>
-          <div style="margin: 15px 0;">
-            <button onclick="printReceiptToPDF('58mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
-                    style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-              58mm (2.28") - Mobile Printer
-            </button>
-            <button onclick="printReceiptToPDF('80mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
-                    style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-              80mm (3.15") - Standard Receipt
-            </button>
-            <button onclick="printReceiptToPDF('112mm'); document.body.removeChild(this.closest('.modal-overlay'))" 
-                    style="display: block; width: 100%; margin: 5px 0; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-              112mm (4.41") - Wide Format
-            </button>
-          </div>
-          <button onclick="document.body.removeChild(this.closest('.modal-overlay'))" 
-                  style="width: 100%; padding: 8px; background: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-            Cancel
-          </button>
-        </div>
-      `;
-    
-      modal.className = 'modal-overlay';
-      document.body.appendChild(modal);
+      
+      // Directly print using wide format (112mm)
+      printReceiptToPDF('112mm');
+    }
     
       // Close modal when clicking outside
       modal.addEventListener('click', function(e) {
@@ -617,7 +581,6 @@
       });
 
     }
-
     // Function to show order details in a modal
     function showOrderModal(event, orderId) {
       event.preventDefault();
@@ -633,7 +596,7 @@
               <div id="receipt-content" class="max-w-lg mx-auto bg-white border border-gray-300 rounded shadow p-6 receipt-font">
                 <div class="text-center mb-4">
                   <h2 class="text-2xl font-bold text-amber-700">Savory Bites Restaurant</h2>
-                  <div class="text-xs text-gray-600">123 Foodie Lane, Gourmet City, NG</div>
+                  <div class="text-xs text-gray-600">123 Gourmet Avenue, Culinary District, NY 10001</div>
                   <div class="text-xs text-gray-600">Phone: 0706-278-2727 | Email: info@savorybites.com</div>
                   <div class="border-b border-dashed border-gray-300 my-2"></div>
                   <div class="text-sm font-semibold text-gray-700">Order Receipt</div>

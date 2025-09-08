@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt - {{ order.order_number }}</title>
+    <style>
+        @page {
+            size: 112mm 297mm;  /* Wide format receipt */
+            margin: 5mm;
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        .receipt {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            font-size: 18px;
+            margin: 5px 0;
+            text-transform: uppercase;
+        }
+        .header p {
+            margin: 3px 0;
+            font-size: 10px;
+        }
+        .order-info {
+            margin: 10px 0;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 10px;
+        }
+        .order-info p {
+            margin: 3px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .order-info p span:first-child {
+            font-weight: bold;
+        }
+        .items {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .items th {
+            text-align: left;
+            border-bottom: 1px solid #000;
+            padding: 5px 0;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+        .items td {
+            padding: 5px 0;
+            vertical-align: top;
+        }
+        .items .item-name {
+            width: 60%;
+        }
+        .items .item-qty, .items .item-price, .items .item-total {
+            width: 15%;
+            text-align: right;
+        }
+        .totals {
+            margin: 15px 0;
+            border-top: 1px dashed #000;
+            border-bottom: 1px dashed #000;
+            padding: 10px 0;
+        }
+        .totals p {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        .totals .total {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 10px;
+        }
+        .thank-you {
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt">
+        <div class="header">
+            <h1>{{ site_name }}</h1>
+            <p>123 Restaurant Street, Foodie City</p>
+            <p>Phone: (070) 6268-2727 | Email: info@savorybites.com</p>
+            <p>Order #{{ order.order_number }}</p>
+            <p>Date: {{ order.created_at|date:"F j, Y H:i" }}</p>
+        </div>
+        
+        <div class="order-info">
+            <p><span>Customer:</span> <span>{{ order.user.get_full_name|default:order.user.username }}</span></p>
+            <p><span>Email:</span> <span>{{ order.user.email }}</span></p>
+            {% if order.delivery_address %}
+            <p><span>Delivery Address:</span> <span>{{ order.delivery_address }}</span></p>
+            {% endif %}
+        </div>
+        
+        <table class="items">
+            <thead>
+                <tr>
+                    <th class="item-name">Item</th>
+                    <th class="item-qty">Qty</th>
+                    <th class="item-price">Price</th>
+                    <th class="item-total">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order_items %}
+                <tr>
+                    <td class="item-name">{{ item.menu_item.name }}</td>
+                    <td class="item-qty">{{ item.quantity }}</td>
+                    <td class="item-price">${{ item.unit_price|floatformat:2 }}</td>
+                    <td class="item-total">${{ item.total_price|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="totals">
+            <p><span>Subtotal:</span> <span>${{ order.subtotal|floatformat:2 }}</span></p>
+            {% if order.delivery_fee %}
+            <p><span>Delivery Fee:</span> <span>${{ order.delivery_fee|floatformat:2 }}</span></p>
+            {% endif %}
+            {% if order.tax_amount %}
+            <p><span>Tax ({{ order.tax_percentage|default:0 }}%):</span> <span>${{ order.tax_amount|floatformat:2 }}</span></p>
+            {% endif %}
+            <p class="total"><span>Total:</span> <span>${{ order.total_amount|floatformat:2 }}</span></p>
+        </div>
+        
+        <div class="thank-you">
+            Thank you for your order!
+        </div>
+        
+        <div class="footer">
+            <p>For any questions about your order, please contact us at:</p>
+            <p>Phone: (070) 6268-2727 | Email: info@savorybites.com</p>
+            <p>Business Hours: Mon-Sun 11:00 AM - 10:00 PM</p>
+            <p>{{ current_date }}</p>
+        </div>
+    </div>
+</body>
+</html>

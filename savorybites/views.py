@@ -225,7 +225,14 @@ def payment_callback(request):
                     delivery_date=datetime.now().date(),
                 )
                 
-                messages.success(request, 'Payment successful! Your order has been confirmed.')
+                # Send Customer Email About their Order
+                send_customer_order_email(order)
+                
+                # Generate and email the receipt
+                from savorybites.utils import process_order_payment_confirmation
+                process_order_payment_confirmation(order)
+                
+                messages.success(request, 'Payment successful! Your order has been confirmed. A receipt has been sent to your email.')
                 return redirect('profile')
             else:
                 messages.error(request, 'Payment verification failed')
