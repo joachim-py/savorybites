@@ -103,6 +103,14 @@ class Order(models.Model):
     def calculate_total(self):
         self.total_price = sum(item.menu_item.price * item.quantity for item in self.cart_items.all())
         self.save()
+    
+    @property
+    def get_delivery_price(self):
+        if self.delivery_option == 'delivery':
+            if self.total_price > 9000 and self.total_price < 450000:
+                return 2000
+            return 1500
+        return 0.00
 
 class OrderItem(models.Model):
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items')

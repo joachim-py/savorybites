@@ -2,21 +2,9 @@ import os
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
-from weasyprint import HTML
+from xhtml2pdf import pisa
 from datetime import datetime
-
-def send_email(subject, body_text, body_html, from_email, to_email):
-    """Send an email with both plain text and HTML versions."""
-    msg = EmailMultiAlternatives(subject, body_text, from_email, [to_email])
-    msg.attach_alternative(body_html, "text/html")
-    
-    try:
-        msg.send()
-        print(f'Email sent to {to_email}!')
-        return True
-    except Exception as e:
-        print(f'Failed to send email to {to_email}: {str(e)}')
-        return False
+from email.utils import formataddr
 
 def generate_receipt_pdf(order):
     """
@@ -29,23 +17,23 @@ def generate_receipt_pdf(order):
     
     # Generate a filename using order number and timestamp
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'receipt_{order.order_number}_{timestamp}.pdf'
+    filename = f'receipt_{order.order_id}_{timestamp}.pdf'
     filepath = os.path.join(receipt_dir, filename)
     
     # Prepare context for the receipt template
     context = {
         'order': order,
-        'order_items': order.orderitem_set.all(),
-        'site_name': 'Savory Bites',
+        'order_items': order.order_items.all(),
+        'site_name': 'Savory Bites Restaurant',
         'current_date': datetime.now().strftime('%B %d, %Y'),
     }
     
     # Render the receipt HTML
     html_string = render_to_string('emails/receipt_pdf.html', context)
-    
-    # Generate PDF using WeasyPrint
-    html = HTML(string=html_string, base_url=settings.BASE_DIR)
-    html.write_pdf(target=filepath)
+
+    # Generate PDF using xhtml2pdf
+    with open(filepath, "wb") as pdf_file:
+        pisa_status = pisa.CreatePDF(html_string, dest=pdf_file)
     
     # Return the relative path that can be used in URLs
     return os.path.join('receipts', filename)
@@ -54,15 +42,15 @@ def send_order_confirmation(order, receipt_path=None):
     """
     Send an order confirmation email to the customer with an optional receipt attachment.
     """
-    subject = f'Order Confirmation - #{order.order_number}'
-    
+    subject = f'Order Confirmation - #{order.order_id}'
+
     # Plain text email body
     body_text = f"""
     Thank you for your order at Savory Bites!
-    
-    Order Number: {order.order_number}
-    Order Date: {order.created_at.strftime('%B %d, %Y %H:%M')}
-    Total Amount: ${order.total_amount:.2f}
+
+    Order Number: {order.order_id}
+    Order Date: {order.order_date.strftime('%B %d, %Y %H:%M')}
+    Total Amount: ₦{order.total_price:.2f}
     
     Your order is being processed and will be ready soon.
     
@@ -76,7 +64,7 @@ def send_order_confirmation(order, receipt_path=None):
     <html>
     <head>
         <meta charset="UTF-8">
-        <title>Order Confirmation - {order.order_number}</title>
+        <title>Order Confirmation - {order.order_id}</title>
         <style>
             body {{
                 font-family: Arial, sans-serif;
@@ -93,9 +81,9 @@ def send_order_confirmation(order, receipt_path=None):
                 background-color: #ffffff;
             }}
             .header {{
-                background-color: #d4a76a;
-                color: white;
-                padding: 20px;
+                background-color: darkorange;
+                color: #000;
+                padding: 10px;
                 text-align: center;
             }}
             .content {{
@@ -120,20 +108,20 @@ def send_order_confirmation(order, receipt_path=None):
     <body>
         <div class="container">
             <div class="header">
-                <h1>Thank you for your order!</h1>
+                <h1>Savory Bites Restaurant</h1>
             </div>
             <div class="content">
-                <p>Hello {order.user.get_full_name() or order.user.username},</p>
+                <p>Hello {order.customer_name},</p>
                 <p>We've received your order and it's being processed. Here are your order details:</p>
                 
                 <div class="order-details">
-                    <p><strong>Order Number:</strong> {order.order_number}</p>
-                    <p><strong>Order Date:</strong> {order.created_at.strftime('%B %d, %Y %H:%M')}</p>
-                    <p><strong>Total Amount:</strong> ${order.total_amount:.2f}</p>
+                    <p><strong>Order Number:</strong> {order.order_id}</p>
+                    <p><strong>Order Date:</strong> {order.order_date.strftime('%B %d, %Y %H:%M')}</p>
+                    <p><strong>Total Amount:</strong> ₦{order.delivery_price:.2f}</p>
                 </div>
-                
-                <p>You'll receive another email once your order is ready for {order.delivery_option}.</p>
-                
+
+                <p>You'll receive another email once your order is ready for {order.get_delivery_option_display()}.</p>
+
                 <p>If you have any questions about your order, please contact our support team.</p>
                 
                 <p>Best regards,<br>The Savory Bites Team</p>
@@ -150,8 +138,8 @@ def send_order_confirmation(order, receipt_path=None):
     email = EmailMultiAlternatives(
         subject=subject,
         body=body_text.strip(),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[order.user.email]
+        from_email= formataddr(("The Savory Bites Restaurant", "larryaangjo@gmail.com")),
+    to=[order.customer_email]
     )
     
     # Attach HTML version
@@ -161,7 +149,7 @@ def send_order_confirmation(order, receipt_path=None):
     if receipt_path and os.path.exists(os.path.join(settings.MEDIA_ROOT, receipt_path)):
         with open(os.path.join(settings.MEDIA_ROOT, receipt_path), 'rb') as pdf_file:
             email.attach(
-                f'receipt_{order.order_number}.pdf',
+                f'receipt_{order.order_id}.pdf',
                 pdf_file.read(),
                 'application/pdf'
             )
@@ -169,7 +157,7 @@ def send_order_confirmation(order, receipt_path=None):
     # Send the email
     try:
         email.send()
-        print(f'Order confirmation email sent to {order.user.email}')
+        print(f'Order confirmation email sent to {order.customer_email}')
         return True
     except Exception as e:
         print(f'Failed to send order confirmation email: {str(e)}')
@@ -183,6 +171,7 @@ def process_order_payment_confirmation(order):
     3. Update order status if needed
     """
     try:
+        print("Processing order payment confirmation...")
         # Generate and save the receipt
         receipt_path = generate_receipt_pdf(order)
         
@@ -193,3 +182,5 @@ def process_order_payment_confirmation(order):
     except Exception as e:
         print(f'Error processing order confirmation: {str(e)}')
         return False
+
+

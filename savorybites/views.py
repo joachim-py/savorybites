@@ -224,16 +224,17 @@ def payment_callback(request):
                     order=order,
                     delivery_date=datetime.now().date(),
                 )
-                
-                # Send Customer Email About their Order
-                send_customer_order_email(order)
-                
+                            
                 # Generate and email the receipt
                 from savorybites.utils import process_order_payment_confirmation
+                order = Order.objects.filter(id=order.id).prefetch_related('order_items').first()
                 process_order_payment_confirmation(order)
-                
-                messages.success(request, 'Payment successful! Your order has been confirmed. A receipt has been sent to your email.')
-                return redirect('profile')
+
+                if order.user:
+                    messages.success(request, 'Payment successful! Your order has been confirmed. A receipt has been sent to your email.')
+                    return redirect('profile')
+                else:
+                    return redirect('index')
             else:
                 messages.error(request, 'Payment verification failed')
                 return redirect('payment', order_id=payment.order.id)
@@ -831,7 +832,8 @@ def payment(request, order_id):
         data = {
             'email': email,
             'amount': amount_in_kobo,
-            'callback_url': 'https://thesavorybites.onrender.com/verify/',
+            'callback_url': 'http://localhost:8000/verify/',
+            # 'callback_url': 'https://thesavorybites.onrender.com/verify/',
             'metadata': {
                 'order_id': order.id,
             }
