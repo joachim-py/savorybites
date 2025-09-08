@@ -12,7 +12,7 @@ from django.views.decorators.http import require_http_methods
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect, render, reverse
 from django.views.decorators.csrf import csrf_protect, csrf_exempt 
 from savorybites.models import (CartItem, Contact, Delivery, Gallery, Menu, Order, OrderItem,
                                 Payment, Profile, Reservation, Review, Special)
@@ -497,21 +497,26 @@ def index(request):
             featured_items[category[0]] = items.first()
 
     if request.user.is_authenticated:
-        cart_count = CartItem.objects.filter(user=request.user).count()
+        cart_items = CartItem.objects.filter(user=request.user)
+        cart_count = cart_items.count()
+        cart_item_ids = list(cart_items.values_list('menu_item_id', flat=True))
     else:
         session_key = request.session.session_key
         if not session_key:
             request.session.save()
             session_key = request.session.session_key
-        cart_count = CartItem.objects.filter(session_key=session_key, user__isnull=True).count()
-
+        cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
+        cart_count = cart_items.count()
+        cart_item_ids = list(cart_items.values_list('menu_item_id', flat=True))
+        
     context = {
         'menu_items': menu_items,
         'specials': specials,
         'gallery': gallery[:8],
         'reviews': reviews[:3],
         'featured_items': featured_items,
-        'cart_count': cart_count
+        'cart_count': cart_count,
+        'cart_item_ids': cart_item_ids
     }
 
     return render(request, 'index.html', context)
@@ -539,15 +544,22 @@ def menu(request):
         cart_items = CartItem.objects.filter(session_key=session_key, user__isnull=True)
 
     cart_count = cart_items.count()
+    cart_item_ids = list(cart_items.values_list('menu_item_id', flat=True))
     
+    # Create a context dictionary that will be passed to both layout and menu templates
     context = {
         'menu_items': menu_items,
         'categories': categories,
         'cart_count': cart_count,
+        'cart_item_ids': cart_item_ids,  # This will be available in the included menu.html
+        'cart_item_ids_json': json.dumps(cart_item_ids),  # For JavaScript usage if needed
         'title': 'Menu',
         'description': 'Explore our menu of delectable dishes.',
         'hero_image': 'menu_banner.jpg'
     }
+    
+    # Store cart_item_ids in the session for template access
+    request.session['cart_item_ids'] = cart_item_ids
 
     return render(request, 'layout.html', context)
 
@@ -636,7 +648,6 @@ def view_cart(request):
     return render(request, 'utilities/cart.html', context)
 
 # Checkout
-@login_required
 def checkout(request):
     try:
         # Get cart items
@@ -655,11 +666,20 @@ def checkout(request):
 
         cart_count = cart_items.count()
         total = sum(item.menu_item.price * item.quantity for item in cart_items) 
-
-        print('GET CART ITEMS:', cart_items)
         
         if request.method == 'POST':
             try:
+                # Check if authentication is required for delivery
+                if request.POST.get('delivery_option') == 'delivery' and not request.user.is_authenticated:
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'status': 'auth_required', 
+                            'message': 'Please log in to complete your delivery order',
+                            'redirect': f"{reverse('login')}?next={reverse('checkout')}"
+                        }, status=401)
+                    else:
+                        return redirect(f"{reverse('login')}?next={reverse('checkout')}")
+
                 # Validate required fields
                 required_fields = {
                     'full_name': 'Full name',
@@ -678,9 +698,15 @@ def checkout(request):
                     errors.append("Delivery address is required when selecting delivery option")
                 
                 if errors:
-                    for error in errors:
-                        messages.error(request, error)
-                    return redirect('checkout')
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': ' '.join(errors)
+                        }, status=400)
+                    else:
+                        for error in errors:
+                            messages.error(request, error)
+                        return redirect('checkout')
 
                 try:
                     # Create order
@@ -709,15 +735,35 @@ def checkout(request):
                             subtotal=cart_item.menu_item.price * cart_item.quantity,
                         )
                     
-                    messages.success(request, 'Order created successfully! Please proceed to payment.')
-                    return redirect('payment', order_id=order.id)
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'status': 'success',
+                            'redirect_url': reverse('payment', args=[order.id])
+                        })
+                    else:
+                        messages.success(request, 'Order created successfully! Please proceed to payment.')
+                        return redirect('payment', order_id=order.id)
                     
                 except Exception as e:
-                    messages.error(request, f'Error creating order: {str(e)}')
-                    return redirect('checkout')
+                    error_msg = f'Error creating order: {str(e)}'
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': error_msg
+                        }, status=500)
+                    else:
+                        messages.error(request, error_msg)
+                        return redirect('checkout')
             except Exception as e:
-                messages.error(request, f'An error occurred: {str(e)}')
-                return redirect('checkout')
+                error_msg = f'An error occurred: {str(e)}'
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': error_msg
+                    }, status=500)
+                else:
+                    messages.error(request, error_msg)
+                    return redirect('checkout')
     except Exception as e:
         messages.error(request, f'Error creating order: {str(e)}')
         return redirect('checkout')
@@ -729,7 +775,7 @@ def checkout(request):
     })
 
 # Payment
-@login_required
+# @login_required
 @csrf_protect
 def payment(request, order_id):
     order = get_object_or_404(Order, id=order_id)
@@ -739,9 +785,10 @@ def payment(request, order_id):
     else:
         total_amount = order.total_price
 
-    if not request.user.is_authenticated:
+    # Only require login for delivery orders
+    if order.delivery_option == 'delivery' and not request.user.is_authenticated:
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'status': 'error', 'message': 'Authentication required'}, status=401)
+            return JsonResponse({'status': 'error', 'message': 'Authentication required for delivery orders'}, status=401)
         else:
             return redirect('login')
     
@@ -749,6 +796,9 @@ def payment(request, order_id):
         cart_count = CartItem.objects.filter(user=request.user).count()
     else:
         session_key = request.session.session_key
+        if not session_key:
+            request.session.save()
+            session_key = request.session.session_key
         if not session_key:
             request.session.save()
             session_key = request.session.session_key
@@ -811,7 +861,6 @@ def payment(request, order_id):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
-    print(total_amount)
     return render(request, 'utilities/payment.html', {
         'order': order,
         'cart_count': cart_count,

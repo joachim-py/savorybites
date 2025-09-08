@@ -1,255 +1,363 @@
-{% load static %}
+{% load static %} {% load cart_filters %} {% with cart_item_ids=cart_item_ids %}
+<!-- Special Offers -->
+<section class="py-16 bg-amber-800 text-white">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold mb-4">Today's Specials</h2>
+      <p class="max-w-2xl mx-auto">
+        Experience our chef's exclusive creations available for a limited time
+      </p>
+    </div>
 
-    <!-- Special Offers -->
-    <section class="py-16 bg-amber-800 text-white">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold mb-4">Today's Specials</h2>
-                <p class="max-w-2xl mx-auto">Experience our chef's exclusive creations available for a limited time</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {% for item in specials %}
+
+      <div class="bg-white text-gray-800 rounded-lg overflow-hidden shadow-lg relative">
+        {% if item.menu_item.id|in_cart:cart_item_ids %}
+        <span class="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">In Cart</span>
+        {% endif %}
+        <img src="{{item.menu_item.image.url}}" alt="{{item.menu_item.name}}" class="w-full h-48 object-cover"/>
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="text-xl font-bold">{{item.menu_item.name}}</h3>
+            <span class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">₦{{item.menu_item.price}}</span>
+          </div>
+          <p class="text-gray-600 mb-4">{{item.menu_item.description}}</p>
+          <div class="flex justify-end">
+            <div class="relative inline-block">
+              <button class="bg-amber-50 text-white text-xl px-4 py-1 rounded hover:bg-amber-100" onclick="addToCart({{item.menu_item.id}}, event)"><span>🛒</span></button>
+              {% if item.menu_item.id|in_cart:cart_item_ids %}
+              <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-amber-500 p-1 text-lg font-bold rounded-full z-10"></span>
+              {% endif %}
             </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {% for item in specials %}
-
-                <div class="bg-white text-gray-800 rounded-lg overflow-hidden shadow-lg">
-                    <img src="{{item.menu_item.image.url}}" alt="{{item.menu_item.name}}" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-xl font-bold">{{item.menu_item.name}}</h3>
-                            <span class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">₦{{item.menu_item.price}}</span>
-                        </div>
-                        <p class="text-gray-600 mb-4">{{item.menu_item.description}}</p>
-                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" onclick="addToCart({{item.menu_item.id}})">Add to Order</button>
-                    </div>
-                </div>
-
-                {% endfor %}
-            </div>
+          </div>
         </div>
-    </section>
+      </div>
+
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Menu Section -->
+<section id="menu" class="py-20">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl font-bold mb-4 text-gray-800">Our Menu</h2>
+      <p class="max-w-2xl mx-auto text-gray-600">
+        Carefully crafted dishes made with the finest ingredients
+      </p>
+    </div>
+
+    <div class="flex md:flex-wrap md:justify-center mb-12 overflow-x-auto -mx-2 px-2 md:overflow-x-visible">
+      <button class="menu-category-btn whitespace-nowrap active px-6 py-2 mx-2 bg-amber-600 text-white rounded-full" data-category="all">All</button>
+      <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="starters">Starters</button>
+      <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="mains">Main Courses</button>
+      <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="desserts">Desserts</button>
+      <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="drinks">Drinks</button>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 menu-items-container">
+      <!-- Starters -->
+      {% for item in menu_items %} {% if item.category == 'ST' %}
+      <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="starters">
+        {% if item.menu_item.id|in_cart:cart_item_ids %}
+          <span class="absolute top-1.5 right-1.5 bg-amber-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full z-10">
+              In Cart
+          </span>
+          {% endif %}
+      
+          <img src="{{item.image.url}}" alt="{{item.name}}" class="w-full h-32 object-cover"/>
+      
+          <div class="p-3">
+              <div class="flex justify-between items-start mb-1">
+                  <h3 class="text-base font-semibold leading-snug">{{item.name}}</h3>
+                  
+              </div>
+      
+              <p class="text-gray-600 text-xs mb-3 line-clamp-2">{{item.description}}</p>
+      
+              <div class="flex justify-between items-center">
+                  <div>
+                      <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap">
+                          ₦{{item.price}}
+                      </span>
+                  </div>
+                  <div class="relative inline-block">
+                      <button class="bg-amber-100 text-white text-lg px-2 py-0.5 rounded hover:bg-amber-200"
+                          onclick="addToCart({{item.id}}, event)">
+                          <span>🛒</span>
+                      </button>
+                      
+                      {% if item.id|in_cart:cart_item_ids %}
+                      <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-amber-500 w-2 h-2 rounded-full z-10"></span>
+                      {% endif %}
+                  </div>
+                  
+              </div>
+          </div>
+      </div>
+      {% endif %} {% endfor %}
+
+      <!-- Mains -->
+      {% for item in menu_items %} {% if item.category == 'MC' %}
+      <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="mains">
+        {% if item.menu_item.id|in_cart:cart_item_ids %}
+          <span class="absolute top-1.5 right-1.5 bg-amber-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full z-10">
+              In Cart
+          </span>
+          {% endif %}
+      
+          <img src="{{item.image.url}}" alt="{{item.name}}" class="w-full h-32 object-cover"/>
+      
+          <div class="p-3">
+              <div class="flex justify-between items-start mb-1">
+                  <h3 class="text-base font-semibold leading-snug">{{item.name}}</h3>
+                  
+              </div>
+      
+              <p class="text-gray-600 text-xs mb-3 line-clamp-2">{{item.description}}</p>
+      
+              <div class="flex justify-between items-center">
+                  <div>
+                      <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap">
+                          ₦{{item.price}}
+                      </span>
+                  </div>
+                  <div class="relative inline-block">
+                      <button class="bg-amber-100 text-white text-lg px-2 py-0.5 rounded hover:bg-amber-200"
+                          onclick="addToCart({{item.id}}, event)">
+                          <span>🛒</span>
+                      </button>
+                      
+                      {% if item.id|in_cart:cart_item_ids %}
+                      <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-amber-500 w-2 h-2 rounded-full z-10"></span>
+                      {% endif %}
+                  </div>
+                  
+              </div>
+                    </div>
+      </div>
+      {% endif %} {% endfor %}
+
+      <!-- Desserts -->
+      {% for item in menu_items %} {% if item.category == 'DE' or item.category == 'SN' %}
+      <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="desserts">
+        {% if item.menu_item.id|in_cart:cart_item_ids %}
+          <span class="absolute top-1.5 right-1.5 bg-amber-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full z-10">
+              In Cart
+          </span>
+          {% endif %}
+      
+          <img src="{{item.image.url}}" alt="{{item.name}}" class="w-full h-32 object-cover"/>
+      
+          <div class="p-3">
+              <div class="flex justify-between items-start mb-1">
+                  <h3 class="text-base font-semibold leading-snug">{{item.name}}</h3>
+                  
+              </div>
+      
+              <p class="text-gray-600 text-xs mb-3 line-clamp-2">{{item.description}}</p>
+      
+              <div class="flex justify-between items-center">
+                  <div>
+                      <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap">
+                          ₦{{item.price}}
+                      </span>
+                  </div>
+                  <div class="relative inline-block">
+                      <button class="bg-amber-100 text-white text-lg px-2 py-0.5 rounded hover:bg-amber-200"
+                          onclick="addToCart({{item.id}}, event)">
+                          <span>🛒</span>
+                      </button>
+                      
+                      {% if item.id|in_cart:cart_item_ids %}
+                      <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-amber-500 w-2 h-2 rounded-full z-10"></span>
+                      {% endif %}
+                  </div>
+                  
+              </div>
+          </div>
+      </div>
+      {% endif %} {% endfor %}
+
+      <!-- Drinks -->
+      {% for item in menu_items %} {% if item.category == 'DR' %}
+      <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="drinks">
+        {% if item.menu_item.id|in_cart:cart_item_ids %}
+        <span class="absolute top-1.5 right-1.5 bg-amber-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full z-10">
+            In Cart
+        </span>
+        {% endif %}
     
-    <!-- Menu Section -->
-    <section id="menu" class="py-20">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl font-bold mb-4 text-gray-800">Our Menu</h2>
-                <p class="max-w-2xl mx-auto text-gray-600">Carefully crafted dishes made with the finest ingredients</p>
-            </div>
-            
-            <div class="flex md:flex-wrap md:justify-center mb-12 overflow-x-auto -mx-2 px-2 md:overflow-x-visible">
-                <button class="menu-category-btn whitespace-nowrap active px-6 py-2 mx-2 bg-amber-600 text-white rounded-full" data-category="all">All</button>
-                <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="starters">Starters</button>
-                <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="mains">Main Courses</button>
-                <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="desserts">Desserts</button>
-                <button class="menu-category-btn whitespace-nowrap px-6 py-2 mx-2 bg-gray-200 text-gray-800 rounded-full hover:bg-amber-600 hover:text-white transition" data-category="drinks">Drinks</button>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 menu-items-container">
-                <!-- Starters -->
-                {% for item in menu_items %}
-                {% if item.category == 'ST' %}
-                <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="starters">
-                    <div class="flex">
-                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-32 h-32 object-cover">
-                        <div class="p-4 flex-1">
-                            <div class="flex justify-between items-start">
-                                <h3 class="text-lg font-bold">{{item.name}}</h3>
-                                <span class="text-amber-600 font-bold">₦{{item.price}}</span>
-                            </div>
-                            <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
-                        </div>
-                    </div>
-                    <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" onclick="addToCart({{item.id}})">Add to Order</button>
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-                
-                <!-- Mains -->
-                {% for item in menu_items %}
-                {% if item.category == 'MC' %}
-                <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="mains">
-                    <div class="flex">
-                        <img src="{{ item.image.url }}" alt="{{item.name}}" class="w-32 h-32 object-cover">
-                        <div class="p-4 flex-1">
-                            <div class="flex justify-between items-start">
-                                <h3 class="text-lg font-bold">{{item.name}}</h3>
-                                <span class="text-amber-600 font-bold">₦{{item.price}}</span>
-                            </div>
-                            <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
-                        </div>
-                    </div>
-                    <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" onclick="addToCart({{item.id}})">Add to Order</button>
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-                
-                <!-- Desserts -->
-                {% for item in menu_items %}
-                {% if item.category == 'DE' or item.category == 'SN' %}
-                <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="desserts">
-                    <div class="flex">
-                        <img src="{{item.image.url}}" alt="{{item.name}}" class="w-32 h-32 object-cover">
-                        <div class="p-4 flex-1">
-                            <div class="flex justify-between items-start">
-                                <h3 class="text-lg font-bold">{{item.name}}</h3>
-                                <span class="text-amber-600 font-bold">₦{{item.price}}</span>
-                            </div>
-                            <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
-                        </div>
-                    </div>
-                    <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" onclick="addToCart({{item.id}})">Add to Order</button>
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-                
-                <!-- Drinks -->
-                {% for item in menu_items %}
-                {% if item.category == 'DR' %}
-                <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden relative" data-category="drinks">
-                    <div class="flex">
-                        <img src="{{item.image.url}}" alt="{{item.name}}" class="w-32 h-32 object-cover">
-                        <div class="p-4 flex-1">
-                            <div class="flex justify-between items-start">
-                                <h3 class="text-lg font-bold">{{item.name}}</h3>
-                                <span class="text-amber-600 font-bold">₦{{item.price}}</span>
-                            </div>
-                            <p class="text-gray-600 text-sm mt-1">{{item.description}}</p>
-                        </div>
-                    </div>
-                    <div class="menu-overlay absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                        <button class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700" onclick="addToCart({{item.id}})">Add to Order</button>
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
+        <img src="{{item.image.url}}" alt="{{item.name}}" class="w-full h-32 object-cover"/>
+    
+        <div class="p-3">
+            <div class="flex justify-between items-start mb-1">
+                <h3 class="text-base font-semibold leading-snug">{{item.name}}</h3>
                 
             </div>
-            <!-- View Full Menu Button -->
-            <div class="text-center mt-12" id="view-full-menu">
-                <a href="{% url 'menu' %}" class="inline-block border-2 border-amber-600 text-amber-600 px-8 py-3 rounded-full hover:bg-amber-600 hover:text-white transition">View Full Menu</a>
-            </div>                
-            
+    
+            <p class="text-gray-600 text-xs mb-3 line-clamp-2">{{item.description}}</p>
+    
+            <div class="flex justify-between items-center">
+                <div>
+                    <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap">
+                        ₦{{item.price}}
+                    </span>
+                </div>
+                <div class="relative inline-block">
+                    <button class="bg-amber-100 text-white text-lg px-2 py-0.5 rounded hover:bg-amber-200"
+                        onclick="addToCart({{item.id}}, event)">
+                        <span>🛒</span>
+                    </button>
+                    
+                    {% if item.id|in_cart:cart_item_ids %}
+                    <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-amber-500 w-2 h-2 rounded-full z-10"></span>
+                    {% endif %}
+                </div>
+                
+            </div>
         </div>
-    </section>
-    <script src="https://unpkg.com/alpinejs" defer></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const categoryButtons = document.querySelectorAll('.menu-category-btn');
-            const menuItems = document.querySelectorAll('.menu-item');
-            const viewFullMenu = document.getElementById('view-full-menu');
+      </div>
+      {% endif %} {% endfor %}
+    </div>
+    <!-- View Full Menu Button -->
+    <div class="text-center mt-12" id="view-full-menu">
+      <a
+        href="{% url 'menu' %}"
+        class="inline-block border-2 border-amber-600 text-amber-600 px-8 py-3 rounded-full hover:bg-amber-600 hover:text-white transition"
+        >View Full Menu</a
+      >
+    </div>
+  </div>
+</section>
+{% endwith %}
+<script src="https://unpkg.com/alpinejs" defer></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const categoryButtons = document.querySelectorAll(".menu-category-btn");
+    const menuItems = document.querySelectorAll(".menu-item");
+    const viewFullMenu = document.getElementById("view-full-menu");
 
-            categoryButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const category = this.getAttribute('data-category');
+    categoryButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        const category = this.getAttribute("data-category");
 
-                    // Remove active class from all buttons
-                    categoryButtons.forEach(btn => btn.classList.remove('active'));
-                    // Add active class to the clicked button
-                    this.classList.add('active');
+        // Remove active class from all buttons
+        categoryButtons.forEach((btn) => btn.classList.remove("active"));
+        // Add active class to the clicked button
+        this.classList.add("active");
 
-                    // Show/Hide menu items based on category
-                    menuItems.forEach(item => {
-                        if (category === 'all' || item.getAttribute('data-category') === category) {
-                            item.style.display = 'block';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-
-                    if (category === 'all') {
-                        viewFullMenu.style.display = 'block';
-                    } else {
-                        viewFullMenu.style.display = 'none';
-                    }
-                });
-            });
+        // Show/Hide menu items based on category
+        menuItems.forEach((item) => {
+          if (
+            category === "all" ||
+            item.getAttribute("data-category") === category
+          ) {
+            item.style.display = "block";
+          } else {
+            item.style.display = "none";
+          }
         });
 
-        // CSRF token for AJAX calls
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
+        if (category === "all") {
+          viewFullMenu.style.display = "block";
+        } else {
+          viewFullMenu.style.display = "none";
+        }
+      });
+    });
+  });
+
+  // CSRF token for AJAX calls
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function addToCart(itemId, event) {
+    event = event || window.event; // Handle both old and new browsers
+    const button = event.currentTarget;
+    const originalHtml = button.innerHTML;
+
+    // Show loading state
+    button.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="26" height="26" viewBox="0 0 30 30">
+          <path d="M 15 3 C 12.031398 3 9.3028202 4.0834384 7.2070312 5.875 A 1.0001 1.0001 0 1 0 8.5058594 7.3945312 C 10.25407 5.9000929 12.516602 5 15 5 C 20.19656 5 24.450989 8.9379267 24.951172 14 L 22 14 L 26 20 L 30 14 L 26.949219 14 C 26.437925 7.8516588 21.277839 3 15 3 z M 4 10 L 0 16 L 3.0507812 16 C 3.562075 22.148341 8.7221607 27 15 27 C 17.968602 27 20.69718 25.916562 22.792969 24.125 A 1.0001 1.0001 0 1 0 21.494141 22.605469 C 19.74593 24.099907 17.483398 25 15 25 C 9.80344 25 5.5490109 21.062074 5.0488281 16 L 8 16 L 4 10 z"></path>
+      </svg>`;
+    button.disabled = true;
+    button.classList.add("opacity-75");
+
+    // Get CSRF token
+    const csrftoken = getCookie("csrftoken");
+
+    // Send AJAX request with proper headers
+    $.ajax({
+      url: '{% url "add_to_cart" %}',
+      type: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+      },
+      data: {
+        menu_item_id: itemId,
+        quantity: 1,
+      },
+      success: function (response) {
+        if (response.status === "success") {
+          // Update cart count
+          updateCartCount(response.cart_count);
+
+          // Show success notification
+          notyf.success(response.message);
+
+          // Immediately show IN CART badge on button
+          setTimeout(() => {
+            // Find the parent .relative container
+            const relativeContainer = button.closest(".relative");
+            if (relativeContainer) {
+              // Remove any existing IN CART badge
+              const oldBadge =
+                relativeContainer.querySelector(".in-cart-badge");
+              if (oldBadge) oldBadge.remove();
+              // Create new badge
+              const badge = document.createElement("span");
+              badge.className =
+                "absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-amber-500 w-3 h-3 rounded-full z-10 in-cart-badge border-2 border-white";
+              badge.style.display = "inline-block";
+              relativeContainer.appendChild(badge);
             }
-            return cookieValue;
+            button.innerHTML = originalHtml;
+            button.classList.remove("opacity-75");
+            button.disabled = false;
+          }, 500);
+        } else {
+          // Show error notification
+          notyf.error(response.message);
+          button.innerHTML = originalHtml;
+          button.classList.remove("opacity-75");
+          button.disabled = false;
         }
+      },
+      error: function (xhr, status, error) {
+        notyf.error("An error occurred while adding to cart");
+        button.innerHTML = originalHtml;
+        button.classList.remove("opacity-75");
+        button.disabled = false;
 
-        function addToCart(itemId) {
-            const button = event.currentTarget;
-            const originalText = button.textContent;
-            
-            // Show loading state
-            button.textContent = 'Adding...';
-            button.disabled = true;
-            button.classList.add('bg-amber-400');
-
-            // Get CSRF token
-            const csrftoken = getCookie('csrftoken');
-            
-            // Send AJAX request with proper headers
-            $.ajax({
-                url: '{% url "add_to_cart" %}',
-                type: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken
-                },
-                data: {
-                    'menu_item_id': itemId,
-                    'quantity': 1
-                },
-                success: function(response) {
-                    if (response.status === 'success') {
-                        // Update cart count
-                        updateCartCount(response.cart_count);
-                        
-                        // Update button state
-                        button.textContent = 'Added!';
-                        button.classList.remove('bg-amber-400');
-                        button.classList.add('bg-green-600');
-                        
-                        // Show notification
-                        notyf.success(response.message);
-                        
-                        // Reset button after 2 seconds
-                        setTimeout(() => {
-                            button.textContent = originalText;
-                            button.classList.remove('bg-green-600');
-                            button.classList.add('bg-amber-600');
-                            button.disabled = false;
-                        }, 2000);
-                    } else {
-                        // Show error
-                        notyf.error(response.message);
-                        button.textContent = originalText;
-                        button.classList.remove('bg-amber-400');
-                        button.classList.add('bg-amber-600');
-                        button.disabled = false;
-                    }
-                },
-                error: function(xhr, status, error) {
-                    notyf.error('An error occurred while adding to cart');
-                    button.textContent = originalText;
-                    button.classList.remove('bg-amber-400');
-                    button.classList.add('bg-amber-600');
-                    button.disabled = false;
-                    
-                    // Log detailed error
-                    console.error('Error:', xhr.responseText);
-                }
-            });
-        }
-    </script>
-
+        // Log detailed error
+        console.error("Error:", xhr.responseText);
+      },
+    });
+  }
+</script>

@@ -1,119 +1,203 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 pb-8 pt-20">
-    <div class="bg-white rounded-lg shadow p-6">
-        <h1 class="text-3xl font-bold mb-6">My Cart</h1>
-        
-        <div id="cart-container">
-            {% if cart_items %}
-            <div id="cart-content">
-                <div class="flex justify-between items-center mb-4">
-                    <div class="text-lg font-semibold">
-                        Subtotal: ₦<span id="cart-subtotal">{{ total }}</span>
-                    </div>
-                    <button id="clear-cart-btn" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-md text-sm flex items-center gap-1 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                        Clear All
-                    </button>
-                </div>
+<div class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+    <div class="max-w-3xl mx-auto px-4 pb-12 pt-24">
+        {% if cart_items %}
+        <!-- Page Header -->
+        <div id="cart-header" class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-2">
+                Cart
+                <span class="inline-block ml-2 text-amber-500">🛒</span>
+            </h1>
+            <div class="w-16 h-1 bg-gradient-to-r from-amber-400 to-orange-400 mx-auto rounded-full"></div>
+        </div>
 
-                <div id="cart-items" class="space-y-3">
-                    {% for item in cart_items %}
-                    <div class="cart-item bg-gray-50 p-4 rounded-lg" data-item-id="{{ item.id }}">
-                        <div class="flex gap-4 mb-3">
-                            <img src="{{ item.menu_item.image.url }}" alt="{{ item.menu_item.name }}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
-                            <div class="flex-grow">
-                                <h3 class="font-medium">{{ item.menu_item.name }}</h3>
-                                <div class="text-sm text-gray-600">
-                                    ₦{{ item.menu_item.price }} × <span class="item-quantity">{{ item.quantity }}</span>
+        <!-- Progress Steps -->
+        <div id="progress" class="max-w-3xl mx-auto mb-12">
+            <div class="flex items-center justify-center space-x-4 md:space-x-8">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                        <span class="text-white font-bold text-sm">1</span>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-amber-600">Cart</span>
+                </div>
+                <div class="flex-1 h-1 bg-gray-200 rounded-full mx-2"></div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-400 font-bold text-sm">2</span>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-400">Checkout</span>
+                </div>
+                <div class="flex-1 h-1 bg-gray-200 rounded-full mx-2"></div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-gray-400 font-bold text-sm">3</span>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-400">Payment</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div id="cart-container" class="relative">
+            {% if cart_items %}
+            <div id="cart-content" class="grid lg:grid-cols-5 gap-8">
+                <!-- Cart Items Section -->
+                <div class="lg:col-span-3">
+                    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 md:p-6">
+                        <!-- Cart Header -->
+                        <div class="flex justify-between items-baseline md:items-center mb-4 space-y-4 md:space-y-0">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
+                                    </svg>
                                 </div>
-                                <div class="font-medium item-subtotal">₦{{ item.subtotal }}</div>
+                                <h2 class="text-xl font-bold text-gray-800">Cart Items</h2>
                             </div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <button class="remove-item text-red-500 hover:text-red-700 text-sm flex items-center gap-1 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <button id="clear-cart-btn" class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1 rounded-xl text-sm font-medium flex items-center gap-2 transition-all duration-300 border border-red-200 hover:border-red-300 hover:shadow-md group">
+                                <svg class="w-4 h-4 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
-                                Remove
+                                Clear All
                             </button>
-                            <div class="flex items-center gap-1">
-                                <button class="quantity-btn decrease w-7 h-7 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                        </div>
+
+                        <!-- Cart Items List -->
+                        <div id="cart-items" class="space-y-3">
+                            {% for item in cart_items %}
+                            <div class="cart-item group bg-gradient-to-r from-gray-50 to-white hover:from-amber-50 hover:to-orange-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-amber-200" data-item-id="{{ item.id }}">
+                                <div class="flex gap-4">
+                                    <div class="relative">
+                                        <img src="{{ item.menu_item.image.url }}" alt="{{ item.menu_item.name }}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0 shadow-sm">
+                                        <div class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-amber-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+                                            {{ item.quantity }}
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow min-w-0">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <p class="text-base text-gray-800 mb-1 group-hover:text-amber-700 transition-colors truncate">{{ item.menu_item.name }}</p>
+                                            <button class="remove-item text-red-500 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-all duration-200 group-remove">
+                                                <svg class="w-3.5 h-3.5 group-remove-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                                <span class="md:inline-block hidden"> Remove </span>
+                                            </button>
+                                        </div>
+                                        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600 mb-2">
+                                            <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                                                ₦{{ item.menu_item.price }}
+                                            </span>
+                                            <span class="text-gray-400"> x </span>
+                                            <span class="item-quantity font-semibold text-amber-600">{{ item.quantity }}</span>
+                                        </div>
+                                        <!-- Quantity Controls -->
+                                        <div class="flex justify-end">
+                                            <div class="flex items-center bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
+                                                <button class="quantity-btn decrease w-6 h-6 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-all duration-200">
+                                                    <svg class="w-2 h-2 hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                                    </svg>
+                                                </button>
+                                                <div class="quantity-display px-1 py-0.5 min-w-6 text-center text-xs font-semibold text-gray-800 bg-white">{{ item.quantity }}</div>
+                                                <button class="quantity-btn increase w-6 h-6 flex items-center justify-center bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white transition-all duration-200">
+                                                    <svg class="w-2 h-2 hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary Section -->
+                <div class="lg:col-span-2">
+                    <div class="sticky top-20">
+                        <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4 md:p-5">
+                            <!-- Summary Header -->
+                            <div class="flex items-center space-x-2 mb-4">
+                                <div class="w-8 h-8 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
                                     </svg>
-                                </button>
-                                <span class="quantity-display px-2 w-10 text-center">{{ item.quantity }}</span>
-                                <button class="quantity-btn increase w-7 h-7 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white rounded transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800">Order Summary</h3>
+                            </div>
+                
+                            <!-- Price Breakdown -->
+                            <div class="space-y-3 mb-6">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600 text-sm font-medium">Subtotal</span>
+                                    <span class="text-lg font-bold text-gray-800">₦<span id="cart-subtotal">{{ total }}</span></span>
+                                </div>
+                                <div class="flex justify-between items-center py-3 bg-gradient-to-r from-amber-50 to-orange-50 -mx-2 px-3 rounded-lg">
+                                    <span class="font-bold text-gray-800">Total</span>
+                                    <span class="text-xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                                        ₦<span id="checkout-total">{{ total }}</span>
+                                    </span>
+                                </div>
+                            </div>
+                
+                            <!-- Checkout Button -->
+                            <button id="checkoutButton" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md group">
+                                <div class="flex items-center justify-center space-x-1">
+                                    <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                </button>
+                                    <span class="text-base">Checkout</span>
+                                </div>
+                            </button>
+                
+                            <!-- Security Badge -->
+                            <div class="mt-3 p-2 bg-green-50 rounded-md border border-green-200">
+                                <div class="flex items-center justify-center space-x-1 text-green-700 text-xs">
+                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="font-medium">Secure SSL Payment</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
-                </div>
-
-                <div class="mt-6 pt-4 border-t">
-                    <button id="checkoutButton" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-lg font-medium transition-colors">
-                        Checkout (₦<span id="checkout-total">{{ total }}</span>)
-                    </button>
                 </div>
             </div>
             {% else %}
-            <div id="empty-cart" class="text-center py-12">
-                <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
+            <!-- Empty Cart State -->
+            <div id="empty-cart" class="text-center">
+                <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-12 max-w-md mx-auto">
+                    <div class="mx-auto w-32 h-32 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center mb-8 shadow-inner">
+                        <svg class="w-16 h-16 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold mb-4 text-gray-800">Your cart is empty</h2>
+                    <p class="text-gray-600 mb-8 text-lg leading-relaxed">Discover our delicious menu items and add them to your cart</p>
+                    <a href="{% url 'menu' %}" class="inline-block bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg group">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-5 h-5 group-hover:animate-bounce" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>Browse Menu</span>
+                        </div>
+                    </a>
                 </div>
-                <h2 class="text-xl font-bold mb-2">Your cart is empty</h2>
-                <p class="text-gray-600 mb-6">Looks like you haven't added anything to your cart yet</p>
-                <a href="{% url 'menu' %}" class="inline-block bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-lg transition-colors">
-                    Browse Menu
-                </a>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
 
- <!-- Login Modal -->
- <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg w-full mx-3 md:w-96">
-        <h2 class="text-2xl font-bold mb-6 text-center">Login to Continue</h2>
-        <form method="post" action="{% url 'login' %}" id="login-form">
-            {% csrf_token %}
-            <input type="hidden" name="login_source" value="modal">
-            <input type="hidden" name="next" value="/checkout/">
-            <div class="space-y-4">
-                <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                    <input type="text" name="username" id="username" required
-                        class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
-                </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" name="password" id="password" required
-                        class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500">
-                </div>
-                <div class="flex items-center">
-                    <input type="checkbox" name="remember" id="remember">
-                    <label for="remember" class="ml-2 text-sm text-gray-600">Remember me</label>
-                </div>
-                <div class="flex justify-between">
-                    <button type="submit" class="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">
-                        Login
-                    </button>
-                    <a href="{% url 'signup' %}" class="text-amber-600 hover:text-amber-700">Create Account</a>
-                </div>
-            </div>
-            <div id="loginError" class="text-red-600 mt-2"></div>
-        </form>
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl p-8 flex flex-col items-center space-y-4">
+        <div class="w-12 h-12 border-4 border-amber-200 border-t-amber-500 rounded-full animate-spin"></div>
+        <p class="text-gray-700 font-medium">Processing...</p>
     </div>
 </div>
 
@@ -125,11 +209,13 @@
         constructor() {
             this.cartContainer = document.getElementById('cart-container');
             this.cartCountElement = document.getElementById('cartCount');
+            this.loadingOverlay = document.getElementById('loading-overlay');
             
             if (!this.cartContainer) return;
             
             this.csrfToken = this.getCookie('csrftoken');
             this.initEventListeners();
+            this.addScrollAnimations();
         }
 
         getCookie(name) {
@@ -145,6 +231,35 @@
                 }
             }
             return cookieValue;
+        }
+
+        showLoading() {
+            if (this.loadingOverlay) {
+                this.loadingOverlay.classList.remove('hidden');
+            }
+        }
+
+        hideLoading() {
+            if (this.loadingOverlay) {
+                this.loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        addScrollAnimations() {
+            const cartItems = document.querySelectorAll('.cart-item');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.classList.add('animate-fade-in-up');
+                        }, index * 100);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            cartItems.forEach(item => {
+                observer.observe(item);
+            });
         }
 
         initEventListeners() {
@@ -175,15 +290,17 @@
                 clearBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     this.clearCart();
+                    document.getElementById('progress').classList.add('hidden');
+                    document.getElementById('cart-header').classList.add('hidden');
                 });
             }
 
             // Checkout button
-            const checkoutBtn = document.getElementById('checkout-btn');
-            if (checkoutBtn) {
-                checkoutBtn.addEventListener('click', (e) => {
+            const checkoutButton = document.getElementById('checkoutButton');
+            if (checkoutButton) {
+                checkoutButton.addEventListener('click', function(e) {  
                     e.preventDefault();
-                    window.location.href = '/checkout/';
+                    window.location.href = "/checkout/";
                 });
             }
         }
@@ -225,6 +342,8 @@
                 return;
             }
 
+            this.showLoading();
+
             try {
                 const response = await fetch(`/cart/update/${itemId}/`, {
                     method: 'POST',
@@ -245,21 +364,31 @@
                     throw new Error(data.message || 'Update failed');
                 }
 
-                // Update the displayed quantity
+                // Update the displayed quantity with animation
+                quantityDisplay.classList.add('animate-pulse');
                 quantityDisplay.textContent = newQuantity;
                 
                 // Update the "× quantity" text
                 const quantityText = cartItemElement.querySelector('.item-quantity');
                 if (quantityText) quantityText.textContent = newQuantity;
                 
+                // Update the quantity badge
+                const quantityBadge = cartItemElement.querySelector('.absolute.bg-amber-400');
+                if (quantityBadge) quantityBadge.textContent = newQuantity;
+                
                 // Update the subtotal for this item
                 const itemSubtotal = cartItemElement.querySelector('.item-subtotal');
                 if (itemSubtotal) {
-                    itemSubtotal.textContent = `₦${(data.price * newQuantity).toFixed(2)}`;
+                    itemSubtotal.innerHTML = `₦${(data.price * newQuantity).toFixed(2)}`;
                 }
 
                 // Update the cart totals
                 this.updateCartTotals(data.total, data.cart_count);
+
+                // Remove animation class after delay
+                setTimeout(() => {
+                    quantityDisplay.classList.remove('animate-pulse');
+                }, 1000);
 
                 // Notify user of success
                 notyf.success('Quantity updated');
@@ -267,25 +396,34 @@
             } catch (error) {
                 console.error('Update error:', error);
                 notyf.error(error.message);
+            } finally {
+                this.hideLoading();
             }
         }
 
         async removeItem(itemId, cartItemElement) {
-
             const deleteItem = await Swal.fire({
                 title: 'Remove item',
                 text: 'Are you sure you want to remove this item from your cart?',
-                icon: 'none',
+                icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
                 confirmButtonText: '<i class="fa fa-trash"> </i> Yes, remove it',
-                cancelButtonText: 'Cancel'
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'rounded-xl',
+                    cancelButton: 'rounded-xl'
+                }
             });
             if (!deleteItem.isConfirmed) return;
 
             const button = cartItemElement.querySelector('.remove-item');
             if (button) button.disabled = true;
+
+            // Add exit animation
+            cartItemElement.classList.add('animate-fade-out');
 
             try {
                 const response = await fetch(`/cart/remove/${itemId}/`, {
@@ -310,14 +448,19 @@
                     throw new Error(data.message || 'Removal failed');
                 }
 
-                cartItemElement.remove();
+                setTimeout(() => {
+                    cartItemElement.remove();
+                }, 300);
+
                 this.updateCartTotals(data.total, data.cart_count);
                 
                 // Show success notification
                 notyf.success('Item removed from cart');
                 
                 if (data.cart_count === 0) {
-                    this.showEmptyCart();
+                    setTimeout(() => {
+                        this.showEmptyCart();
+                    }, 400);
                     // Hide the cart count completely when cart is empty
                     if (this.cartCountElement) {
                         this.cartCountElement.style.display = 'none';
@@ -327,6 +470,7 @@
             } catch (error) {
                 console.error('Remove error:', error);
                 notyf.error(error.message);
+                cartItemElement.classList.remove('animate-fade-out');
             } finally {
                 if (button) button.disabled = false;
             }
@@ -336,14 +480,21 @@
             const deleteCart = await Swal.fire({
                 title: `Clear cart items`,
                 text: 'Are you sure you want to clear your entire cart?',
-                icon: 'none',
+                icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
                 confirmButtonText: '<i class="fa fa-shopping-cart"> </i> Yes, clear it',
-                cancelButtonText: 'Cancel'
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'rounded-xl',
+                    cancelButton: 'rounded-xl'
+                }
             });
             if (!deleteCart.isConfirmed) return;
+
+            this.showLoading();
 
             try {
                 const response = await fetch('/cart/clear/', {
@@ -361,30 +512,46 @@
                     throw new Error(data.message || 'Clear failed');
                 }
 
-                document.getElementById('cart-content').remove();
-                this.showEmptyCart();
+                const cartContent = document.getElementById('cart-content');
+                if (cartContent) {
+                    cartContent.classList.add('animate-fade-out');
+                    setTimeout(() => {
+                        cartContent.remove();
+                        this.showEmptyCart();
+                    }, 300);
+                }
+                
                 this.updateCartTotals(0, 0);
                 
                 notyf.success('Cart cleared successfully');
             } catch (error) {
                 console.error('Error clearing cart:', error);
                 notyf.error('Failed to clear cart: ' + error.message);
+            } finally {
+                this.hideLoading();
             }
         }
 
         showEmptyCart() {
             this.cartContainer.innerHTML = `
-                <div id="empty-cart" class="text-center py-12">
-                    <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
+                <div id="empty-cart" class="text-center py-16 animate-fade-in">
+                    <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-12 max-w-md mx-auto">
+                        <div class="mx-auto w-32 h-32 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center mb-8 shadow-inner">
+                            <svg class="w-16 h-16 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-3xl font-bold mb-4 text-gray-800">Your cart is empty</h2>
+                        <p class="text-gray-600 mb-8 text-lg leading-relaxed">Discover our delicious menu items and add them to your cart</p>
+                        <a href="{% url 'menu' %}" class="inline-block bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg group">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-5 h-5 group-hover:animate-bounce" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                                <span>Browse Menu</span>
+                            </div>
+                        </a>
                     </div>
-                    <h2 class="text-xl font-bold mb-2">Your cart is empty</h2>
-                    <p class="text-gray-600 mb-6">Looks like you haven't added anything to your cart yet</p>
-                    <a href="{% url 'menu' %}" class="inline-block bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-lg transition-colors">
-                        Browse Menu
-                    </a>
                 </div>
             `;
         }
@@ -398,45 +565,112 @@
         } catch (error) {
             console.error('Error initializing cart:', error);
         }
-        const loginModal = document.getElementById('loginModal');
-        const loginForm = document.getElementById('login-form');
-        document.getElementById('checkoutButton').addEventListener('click', function(e) {  
-            e.preventDefault();
-            if ("{{request.user.is_authenticated}}" === "True") {
-                    window.location.href = "/checkout/"; 
-            } else {
-                loginModal.classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
-            }
-        });
-        document.getElementById('loginModal').addEventListener('click', function(e) {
-            if (e.target.id === 'loginModal') {
-                loginModal.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-            }
-        });
-            
-        if (loginForm) {
-            loginForm.onsubmit = async function(e) {
-                e.preventDefault();
-                const form = e.target;
-                const formData = new FormData(form);
-                const response = await fetch(form.action, {
-                    method: "POST",
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    body: formData
-                });
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('loginModal').classList.add('hidden');
-                    window.location.href = data.redirect_url;
-                } else {
-                    document.getElementById('loginError').innerText = data.message;
-                }
-            };
-        } 
+        
     });
 
+    // Add custom CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .animate-fade-out {
+            animation: fadeOut 0.3s ease-in forwards;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* Smooth hover transitions */
+        .cart-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cart-item:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #f59e0b, #ea580c);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #d97706, #dc2626);
+        }
+
+        /* Glassmorphism effect enhancement */
+        .backdrop-blur-sm {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        /* Loading animation enhancement */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Button press effect */
+        .quantity-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Gradient text animation */
+        .bg-clip-text {
+            background-clip: text;
+            -webkit-background-clip: text;
+        }
+    `;
+    document.head.appendChild(style);
     
 </script>
 {% endblock %}
