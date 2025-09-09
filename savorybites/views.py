@@ -3,6 +3,7 @@ from datetime import datetime
 from random import shuffle
 from decouple import config
 from django.contrib import messages
+from django.conf import settings
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -760,11 +761,17 @@ def payment(request, order_id):
             'Accept': 'application/json'
         }
 
+        # Determine the correct callback URL based on environment
+        
+        if settings.DEBUG:
+            callback_url = 'http://localhost:8000/verify/'
+        else:
+            callback_url = 'https://thesavorybites.onrender.com/verify/'
+            
         data = {
             'email': email,
             'amount': amount_in_kobo,
-            # 'callback_url': 'http://localhost:8000/verify/',
-            'callback_url': 'https://thesavorybites.onrender.com/verify/',
+            'callback_url': callback_url,
             'metadata': {
                 'order_id': order.id,
             }
