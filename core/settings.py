@@ -27,7 +27,7 @@ STATICFILES_DIR = os.path.join(STATIC_DIR)
 SECRET_KEY = 'django-insecure-dmdy#88*tel%8a_x8k4=v=wl3#4*_@!c$%^z84q$0jouajzrxy'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "thesavorybites.onrender.com"]
 

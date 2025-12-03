@@ -25,7 +25,7 @@
           <p class="text-gray-600 mb-4">{{item.menu_item.description}}</p>
           <div class="flex justify-end">
             <div class="relative inline-block">
-              <button class="bg-amber-50 text-white text-xl px-4 py-1 rounded hover:bg-amber-100" onclick="addToCart({{item.menu_item.id}}, event)"><span>🛒</span></button>
+              <button class="bg-amber-50 text-xl px-4 py-1 rounded hover:bg-amber-100" onclick="addToCart({{item.menu_item.id}}, event)"><span>🛒</span></button>
               {% if item.menu_item.id|in_cart:cart_item_ids %}
               <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-amber-500 p-1 text-lg font-bold rounded-full z-10"></span>
               {% endif %}
