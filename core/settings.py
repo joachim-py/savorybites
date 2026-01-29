@@ -27,7 +27,7 @@ STATICFILES_DIR = os.path.join(STATIC_DIR)
 SECRET_KEY = 'django-insecure-dmdy#88*tel%8a_x8k4=v=wl3#4*_@!c$%^z84q$0jouajzrxy'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "thesavorybites.onrender.com"]
 
@@ -124,6 +124,7 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATIC_DIRS = [STATICFILES_DIR, ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
