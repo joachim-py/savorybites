@@ -763,10 +763,10 @@ def payment(request, order_id):
 
         # Determine the correct callback URL based on environment
         
-        if settings.DEBUG:
-            callback_url = 'http://localhost:8000/verify/'
-        else:
-            callback_url = 'https://thesavorybites.onrender.com/verify/'
+        # if settings.DEBUG:
+        #     callback_url = 'http://localhost:8000/verify/'
+        # else:
+        callback_url = 'https://thesavorybites.onrender.com/verify/'
             
         data = {
             'email': email,
